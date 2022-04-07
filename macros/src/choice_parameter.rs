@@ -11,7 +11,7 @@ struct VariantAttribute {
     name: Vec<String>,
 }
 
-pub fn choice_parameter(input: syn::DeriveInput) -> Result<TokenStream, darling::Error> {
+pub fn choice_parameter(input: syn::DeriveInput) -> ::std::result::Result<TokenStream, darling::Error> {
     let enum_ = match input.data {
         syn::Data::Enum(x) => x,
         _ => {
@@ -40,7 +40,7 @@ pub fn choice_parameter(input: syn::DeriveInput) -> Result<TokenStream, darling:
             .attrs
             .into_iter()
             .map(|attr| attr.parse_meta().map(syn::NestedMeta::Meta))
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<::std::result::Result<Vec<_>, _>>()?;
         let mut names = <VariantAttribute as darling::FromMeta>::from_list(&attrs)?.name;
 
         let main_name = if names.is_empty() {
@@ -64,7 +64,7 @@ pub fn choice_parameter(input: syn::DeriveInput) -> Result<TokenStream, darling:
                 _: &poise::serenity_prelude::Context,
                 _: poise::ApplicationCommandOrAutocompleteInteraction<'_>,
                 value: &poise::serenity::json::Value,
-            ) -> Result<Self, poise::SlashArgError> {
+            ) -> ::std::result::Result<Self, poise::SlashArgError> {
                 use poise::serenity_prelude::json::prelude::*;
                 let choice_key = value
                     .as_u64()
@@ -88,7 +88,7 @@ pub fn choice_parameter(input: syn::DeriveInput) -> Result<TokenStream, darling:
         impl std::str::FromStr for #enum_ident {
             type Err = poise::InvalidChoice;
 
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
+            fn from_str(s: &str) -> ::std::result::Result<Self, Self::Err> {
                 #(
                     if s.eq_ignore_ascii_case(#display_strings)
                         #( || s.eq_ignore_ascii_case(#more_display_strings) )*
