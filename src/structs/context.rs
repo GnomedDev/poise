@@ -261,7 +261,7 @@ impl<'a, U, E> Context<'a, U, E> {
 
                 // Check context menu command
                 if let (Some(action), Some(target)) =
-                    (ctx.command.context_menu_action, &interaction.data.target())
+                    (ctx.command.context_menu_action, interaction.data.target())
                 {
                     return match action {
                         crate::ContextMenuCommandAction::User(action) => {
@@ -273,7 +273,7 @@ impl<'a, U, E> Context<'a, U, E> {
                         }
                         crate::ContextMenuCommandAction::Message(action) => {
                             if let serenity::ResolvedTarget::Message(message) = target {
-                                action(ctx, *message.clone()).await
+                                action(ctx, message.clone()).await
                             } else {
                                 Ok(())
                             }
