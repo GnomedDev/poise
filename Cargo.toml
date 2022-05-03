@@ -19,13 +19,10 @@ log = { version = "0.4.14", default-features = false } # warning about weird sta
 derivative = "2.2.0"
 
 [dependencies.serenity]
-default-features = false
+git = "https://github.com/serenity-rs/serenity"
 features = ["builder", "client", "gateway", "model", "utils", "collector", "chrono"]
-
-version = "0.11.2"
-
-# git = "https://github.com/serenity-rs/serenity"
-# branch = "next"
+default-features = false
+branch = "next"
 
 # git = "https://github.com/serenity-rs/serenity"
 # rev = "2bb9a01bfccd0485ccb7e9f20cce8edff7426eb3"

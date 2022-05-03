@@ -115,7 +115,7 @@ pub async fn dispatch_interaction<'a, U, E>(
             action(ctx).await
         }
         serenity::ApplicationCommandType::User => {
-            match (ctx.command.context_menu_action, &interaction.data.target()) {
+            match (ctx.command.context_menu_action, interaction.data.target()) {
                 (
                     Some(crate::ContextMenuCommandAction::User(action)),
                     Some(serenity::ResolvedTarget::User(user, _)),
@@ -124,11 +124,11 @@ pub async fn dispatch_interaction<'a, U, E>(
             }
         }
         serenity::ApplicationCommandType::Message => {
-            match (ctx.command.context_menu_action, &interaction.data.target()) {
+            match (ctx.command.context_menu_action, interaction.data.target()) {
                 (
                     Some(crate::ContextMenuCommandAction::Message(action)),
                     Some(serenity::ResolvedTarget::Message(message)),
-                ) => action(ctx, *message.clone()).await,
+                ) => action(ctx, message.clone()).await,
                 _ => return Err(command_structure_mismatch_error),
             }
         }
