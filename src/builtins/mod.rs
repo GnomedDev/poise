@@ -157,7 +157,7 @@ pub async fn autocomplete_command<U, E>(
 /// let commands = &ctx.framework().options().commands;
 /// let create_commands = poise::builtins::create_application_commands(commands);
 ///
-/// serenity::ApplicationCommand::set_global_application_commands(ctx.discord(), |b| {
+/// serenity::Command::set_global_application_commands(ctx.discord(), |b| {
 ///     *b = create_commands; // replace the given builder with the one prepared by poise
 ///     b
 /// }).await?;
@@ -220,7 +220,7 @@ pub async fn register_application_commands<U, E>(
     if global {
         ctx.say(format!("Registering {} commands...", commands.len()))
             .await?;
-        serenity::ApplicationCommand::set_global_application_commands(ctx.discord(), |b| {
+        serenity::Command::set_global_application_commands(ctx.discord(), |b| {
             *b = commands_builder;
             b
         })
@@ -326,14 +326,14 @@ pub async fn register_application_commands_buttons<U, E>(
         if register {
             ctx.say(format!("Registering {} global commands...", commands.len()))
                 .await?;
-            serenity::ApplicationCommand::set_global_application_commands(ctx.discord(), |b| {
+            serenity::Command::set_global_application_commands(ctx.discord(), |b| {
                 *b = create_commands;
                 b
             })
             .await?;
         } else {
             ctx.say("Unregistering global commands...").await?;
-            serenity::ApplicationCommand::set_global_application_commands(ctx.discord(), |b| b)
+            serenity::Command::set_global_application_commands(ctx.discord(), |b| b)
                 .await?;
         }
     } else {

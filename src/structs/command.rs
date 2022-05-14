@@ -202,7 +202,7 @@ impl<U, E> Command<U, E> {
             .description(self.inline_help.unwrap_or("A slash command"));
 
         if self.subcommands.is_empty() {
-            builder.kind(serenity::ApplicationCommandOptionType::SubCommand);
+            builder.kind(serenity::CommandOptionType::SubCommand);
 
             for param in &self.parameters {
                 // Using `?` because if this command has slash-incompatible parameters, we cannot
@@ -210,7 +210,7 @@ impl<U, E> Command<U, E> {
                 builder.add_sub_option(param.create_as_slash_command_option()?);
             }
         } else {
-            builder.kind(serenity::ApplicationCommandOptionType::SubCommandGroup);
+            builder.kind(serenity::CommandOptionType::SubCommandGroup);
 
             for subcommand in &self.subcommands {
                 if let Some(subcommand) = subcommand.create_as_subcommand() {
@@ -259,9 +259,9 @@ impl<U, E> Command<U, E> {
         builder
             .name(self.context_menu_name.unwrap_or(self.name))
             .kind(match context_menu_action {
-                crate::ContextMenuCommandAction::User(_) => serenity::ApplicationCommandType::User,
+                crate::ContextMenuCommandAction::User(_) => serenity::CommandType::User,
                 crate::ContextMenuCommandAction::Message(_) => {
-                    serenity::ApplicationCommandType::Message
+                    serenity::CommandType::Message
                 }
             });
 

@@ -256,10 +256,19 @@ pub mod serenity_prelude {
         http::*,
         model::{
             event::*,
-            interactions::{
-                application_command::*, autocomplete::*, message_component::*, modal::*, *,
-            },
             prelude::*,
+            application::{
+                command::*,
+                component::*,
+                interaction::{
+                    application_command::*,
+                    message_component::*,
+                    autocomplete::*,
+                    modal::*,
+                    *,
+                },
+                *,
+            },
         },
         prelude::*,
         utils::*,
