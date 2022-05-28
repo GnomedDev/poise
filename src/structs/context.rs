@@ -132,10 +132,8 @@ impl<'a, U, E> Context<'a, U, E> {
 
     // Doesn't fit in with the rest of the functions here but it's convenient
     /// Return the guild of this context, if we are inside a guild.
-    ///
-    /// Warning: clones the entire Guild instance out of the cache
     #[cfg(feature = "cache")]
-    pub fn guild(&self) -> Option<serenity::Guild> {
+    pub fn guild(&self) -> Option<serenity::cache::GuildRef<'_>> {
         self.guild_id()?.to_guild_cached(self.discord())
     }
 
@@ -149,7 +147,7 @@ impl<'a, U, E> Context<'a, U, E> {
     pub async fn partial_guild(&self) -> Option<serenity::PartialGuild> {
         #[cfg(feature = "cache")]
         if let Some(guild) = self.guild_id()?.to_guild_cached(self.discord()) {
-            return Some(guild.into());
+            return Some(guild.clone().into());
         }
 
         self.guild_id()?.to_partial_guild(self.discord()).await.ok()
