@@ -194,9 +194,7 @@ impl<U, E> Command<U, E> {
             .name(self.context_menu_name.unwrap_or(self.name))
             .kind(match context_menu_action {
                 crate::ContextMenuCommandAction::User(_) => serenity::CommandType::User,
-                crate::ContextMenuCommandAction::Message(_) => {
-                    serenity::CommandType::Message
-                }
+                crate::ContextMenuCommandAction::Message(_) => serenity::CommandType::Message,
             });
 
         Some(builder)

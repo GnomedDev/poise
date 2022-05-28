@@ -189,8 +189,7 @@ pub async fn register_application_commands_buttons<U, E>(
             .await?;
         } else {
             ctx.say("Unregistering global commands...").await?;
-            serenity::Command::set_global_application_commands(ctx.discord(), |b| b)
-                .await?;
+            serenity::Command::set_global_application_commands(ctx.discord(), |b| b).await?;
         }
     } else {
         let guild_id = match ctx.guild_id() {

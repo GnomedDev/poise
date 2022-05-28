@@ -7,10 +7,7 @@ fn find_matching_command<'a, 'b, U, E>(
     interaction_name: &str,
     interaction_options: &'b [serenity::CommandDataOption],
     commands: &'a [crate::Command<U, E>],
-) -> Option<(
-    &'a crate::Command<U, E>,
-    &'b [serenity::CommandDataOption],
-)> {
+) -> Option<(&'a crate::Command<U, E>, &'b [serenity::CommandDataOption])> {
     commands.iter().find_map(|cmd| {
         if interaction_name != cmd.name && Some(interaction_name) != cmd.context_menu_name {
             return None;

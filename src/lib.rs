@@ -261,20 +261,16 @@ pub mod serenity_prelude {
         collector::*,
         http::*,
         model::{
-            event::*,
-            prelude::*,
             application::{
                 command::*,
                 component::*,
                 interaction::{
-                    application_command::*,
-                    message_component::*,
-                    autocomplete::*,
-                    modal::*,
-                    *,
+                    application_command::*, autocomplete::*, message_component::*, modal::*, *,
                 },
                 *,
             },
+            event::*,
+            prelude::*,
         },
         prelude::*,
         utils::*,
