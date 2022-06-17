@@ -211,11 +211,10 @@ impl<'att> CreateReply<'att> {
         } = self;
 
         // Empty string resets content (happens when user replaces text with embed)
-        f.content(content.as_deref().unwrap_or(""));
+        f.content(content.unwrap_or_default());
 
         f.set_embeds(embeds);
 
-        f.0.insert("attachments", serenity::json::json! { [] }); // reset attachments
         for attachment in attachments {
             f.attachment(attachment);
         }

@@ -18,7 +18,7 @@ pub enum ApplicationCommandOrAutocompleteInteraction<'a> {
 
 impl<'a> ApplicationCommandOrAutocompleteInteraction<'a> {
     /// Returns the data field of the underlying interaction
-    pub fn data(self) -> &'a serenity::ApplicationCommandInteractionData {
+    pub fn data(self) -> &'a serenity::CommandData {
         match self {
             Self::ApplicationCommand(x) => &x.data,
             Self::Autocomplete(x) => &x.data,
@@ -90,7 +90,7 @@ pub struct ApplicationContext<'a, U, E> {
     /// **Not** equivalent to `self.interaction.data().options`. That one refers to just the
     /// top-level command arguments, whereas [`Self::args`] is the options of the actual
     /// subcommand, if any.
-    pub args: &'a [serenity::ApplicationCommandInteractionDataOption],
+    pub args: &'a [serenity::CommandDataOption],
     /// Keeps track of whether an initial response has been sent.
     ///
     /// Discord requires different HTTP endpoints for initial and additional responses.
@@ -196,7 +196,7 @@ pub struct CommandParameter<U, E> {
     /// ```rust
     /// # use poise::serenity_prelude as serenity;
     /// # let _: fn(&mut serenity::CreateApplicationCommandOption) -> &mut serenity::CreateApplicationCommandOption =
-    /// |b| b.kind(serenity::ApplicationCommandOptionType::Integer).min_int_value(0).max_int_value(u32::MAX)
+    /// |b| b.kind(serenity::CommandOptionType::Integer).min_int_value(0).max_int_value(u32::MAX)
     /// # ;
     /// ```
     #[derivative(Debug = "ignore")]
@@ -228,7 +228,7 @@ impl<U, E> CommandParameter<U, E> {
             .name(self.name)
             .description(self.description?)
             .set_autocomplete(self.autocomplete_callback.is_some());
-        if let Some(channel_types) = &self.channel_types {
+        if let Some(channel_types) = self.channel_types.clone() {
             builder.channel_types(channel_types);
         }
         (self.type_setter?)(&mut builder);

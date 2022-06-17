@@ -1,7 +1,8 @@
 //! Contains the built-in help command and surrounding infrastructure
 
-use crate::serenity_prelude as serenity;
 use std::fmt::Write as _;
+
+use crate::serenity_prelude as serenity;
 
 /// Optional configuration for how the help message from [`help()`] looks
 pub struct HelpConfiguration<'a> {
@@ -106,14 +107,15 @@ async fn help_all_commands<U, E>(
 
             let total_command_name_length = prefix.chars().count() + command.name.chars().count();
             let padding = 12_usize.saturating_sub(total_command_name_length) + 1;
-            let _ = writeln!(
+            writeln!(
                 menu,
                 "  {}{}{}{}",
                 prefix,
                 command.name,
                 " ".repeat(padding),
                 command.inline_help.unwrap_or("")
-            );
+            )
+            .unwrap();
         }
     }
 
@@ -127,7 +129,7 @@ async fn help_all_commands<U, E>(
                 None => continue,
             };
             let name = command.context_menu_name.unwrap_or(command.name);
-            let _ = writeln!(menu, "  {} (on {})", name, kind);
+            writeln!(menu, "  {} (on {})", name, kind).unwrap();
         }
     }
 

@@ -15,17 +15,6 @@ async fn user_permissions(
         None => return Some(serenity::Permissions::all()), // no permission checks in DMs
     };
 
-    #[cfg(feature = "cache")]
-    let guild = match ctx.cache.guild(guild_id) {
-        Some(x) => x,
-        None => return None, // Guild not in cache
-    };
-    #[cfg(not(feature = "cache"))]
-    let guild = match ctx.http.get_guild(guild_id.0).await {
-        Ok(x) => x,
-        Err(_) => return None,
-    };
-
     // Use to_channel so that it can fallback on HTTP for threads (which aren't in cache usually)
     let channel = match channel_id.to_channel(ctx).await {
         Ok(serenity::Channel::Guild(channel)) => channel,
@@ -38,18 +27,17 @@ async fn user_permissions(
         Err(_) => return None,
     };
 
-    #[cfg(feature = "cache")]
-    let cached_member = guild.members.get(&user_id).cloned();
-    #[cfg(not(feature = "cache"))]
-    let cached_member = None;
+    let member = guild_id.member(ctx, user_id).await.ok()?;
 
-    // If member not in cache (probably because presences intent is not enabled), retrieve via HTTP
-    let member = match cached_member {
+    #[cfg(feature = "cache")]
+    let guild = match ctx.cache.guild(guild_id) {
         Some(x) => x,
-        None => match ctx.http.get_member(guild_id.0, user_id.0).await {
-            Ok(member) => member,
-            Err(_) => return None,
-        },
+        None => return None, // Guild not in cache
+    };
+    #[cfg(not(feature = "cache"))]
+    let guild = match ctx.http.get_guild(guild_id.0).await {
+        Ok(x) => x,
+        Err(_) => return None,
     };
 
     guild.user_permissions_in(&channel, &member).ok()
@@ -76,10 +64,9 @@ async fn missing_permissions<U, E>(
 /// Doesn't actually start the cooldown timer! This should be done by the caller later, after
 /// argument parsing.
 /// (A command that didn't even get past argument parsing shouldn't trigger cooldowns)
-#[allow(clippy::needless_lifetimes)] // false positive (clippy issue 7271)
 pub async fn check_permissions_and_cooldown<'a, U, E>(
     ctx: crate::Context<'a, U, E>,
-    cmd: &crate::Command<U, E>,
+    cmd: &'a crate::Command<U, E>,
 ) -> Result<(), crate::FrameworkError<'a, U, E>> {
     if cmd.owners_only && !ctx.framework().options().owners.contains(&ctx.author().id) {
         return Err(crate::FrameworkError::NotAnOwner { ctx });
@@ -91,7 +78,7 @@ pub async fn check_permissions_and_cooldown<'a, U, E>(
             Some(guild_id) => {
                 #[cfg(feature = "cache")]
                 if ctx.framework().options().require_cache_for_guild_check
-                    && ctx.discord().cache.guild_field(guild_id, |_| ()).is_none()
+                    && ctx.discord().cache.guild(guild_id).is_none()
                 {
                     return Err(crate::FrameworkError::GuildOnly { ctx });
                 }

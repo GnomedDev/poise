@@ -1,5 +1,8 @@
 //! Just contains Context and PartialContext structs
 
+use std::borrow::Cow;
+use std::num::NonZeroU64;
+
 use crate::serenity_prelude as serenity;
 
 /// Wrapper around either [`crate::ApplicationContext`] or [`crate::PrefixContext`]
@@ -132,10 +135,8 @@ impl<'a, U, E> Context<'a, U, E> {
 
     // Doesn't fit in with the rest of the functions here but it's convenient
     /// Return the guild of this context, if we are inside a guild.
-    ///
-    /// Warning: clones the entire Guild instance out of the cache
     #[cfg(feature = "cache")]
-    pub fn guild(&self) -> Option<serenity::Guild> {
+    pub fn guild(&self) -> Option<serenity::cache::GuildRef<'_>> {
         self.guild_id()?.to_guild_cached(self.discord())
     }
 
@@ -149,7 +150,7 @@ impl<'a, U, E> Context<'a, U, E> {
     pub async fn partial_guild(&self) -> Option<serenity::PartialGuild> {
         #[cfg(feature = "cache")]
         if let Some(guild) = self.guild_id()?.to_guild_cached(self.discord()) {
-            return Some(guild.into());
+            return Some(guild.clone().into());
         }
 
         self.guild_id()?.to_partial_guild(self.discord()).await.ok()
@@ -158,15 +159,23 @@ impl<'a, U, E> Context<'a, U, E> {
     // Doesn't fit in with the rest of the functions here but it's convenient
     /// Returns the author of the invoking message or interaction, as a [`serenity::Member`]
     ///
+    /// Returns a reference to the inner member object if in an [`ApplicationContext`], otherwise
+    /// clones the member out of the cache, or fetches from the discord API.
+    ///
     /// Returns None if this command was invoked in DMs, or if the member cache lookup or HTTP
     /// request failed
     ///
-    /// Warning: clones the entire Member instance out of the cache
-    pub async fn author_member(&self) -> Option<serenity::Member> {
-        self.guild_id()?
-            .member(self.discord(), self.author().id)
-            .await
-            .ok()
+    /// Warning: can clone the entire Member instance out of the cache
+    pub async fn author_member(&'a self) -> Option<Cow<'a, serenity::Member>> {
+        if let Self::Application(ctx) = self {
+            ctx.interaction.member().map(Cow::Borrowed)
+        } else {
+            self.guild_id()?
+                .member(self.discord(), self.author().id)
+                .await
+                .ok()
+                .map(Cow::Owned)
+        }
     }
 
     /// Return the datetime of the invoking message or interaction
@@ -186,14 +195,14 @@ impl<'a, U, E> Context<'a, U, E> {
     }
 
     /// Return a ID that uniquely identifies this command invocation.
-    pub fn id(&self) -> u64 {
+    pub fn id(&self) -> NonZeroU64 {
         match self {
             Self::Application(ctx) => ctx.interaction.id().0,
             Self::Prefix(ctx) => {
-                let mut id = ctx.msg.id.0;
                 if let Some(edited_timestamp) = ctx.msg.edited_timestamp {
                     // We replace the 42 datetime bits with msg.timestamp_edited so that the ID is
                     // unique even after edits
+                    let mut id = ctx.msg.id.get();
 
                     // Set existing datetime bits to zero
                     id &= !0 >> 42;
@@ -201,8 +210,12 @@ impl<'a, U, E> Context<'a, U, E> {
                     // Calculate Discord's datetime representation (millis since Discord epoch) and
                     // insert those bits into the ID
                     id |= ((edited_timestamp.timestamp_millis() - 1420070400000) as u64) << 22;
+
+                    // This is safe, as the ID is definitely not zero
+                    NonZeroU64::new(id).unwrap()
+                } else {
+                    ctx.msg.id.0
                 }
-                id
             }
         }
     }
@@ -252,7 +265,7 @@ impl<'a, U, E> Context<'a, U, E> {
                 };
 
                 // Check slash command
-                if interaction.data.kind == serenity::ApplicationCommandType::ChatInput {
+                if interaction.data.kind == serenity::CommandType::ChatInput {
                     return if let Some(action) = ctx.command.slash_action {
                         action(ctx).await
                     } else {
@@ -262,7 +275,7 @@ impl<'a, U, E> Context<'a, U, E> {
 
                 // Check context menu command
                 if let (Some(action), Some(target)) =
-                    (ctx.command.context_menu_action, &interaction.data.target())
+                    (ctx.command.context_menu_action, interaction.data.target())
                 {
                     return match action {
                         crate::ContextMenuCommandAction::User(action) => {
@@ -274,7 +287,7 @@ impl<'a, U, E> Context<'a, U, E> {
                         }
                         crate::ContextMenuCommandAction::Message(action) => {
                             if let serenity::ResolvedTarget::Message(message) = target {
-                                action(ctx, *message.clone()).await
+                                action(ctx, message.clone()).await
                             } else {
                                 Ok(())
                             }

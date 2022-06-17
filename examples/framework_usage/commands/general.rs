@@ -1,4 +1,7 @@
+use std::fmt::Write as _;
+
 use crate::{Context, Error};
+
 use poise::serenity_prelude as serenity;
 use std::fmt::Write as _;
 
@@ -47,7 +50,7 @@ pub async fn getvotes(
     } else {
         let mut response = String::new();
         for (choice, num_votes) in ctx.data().votes.lock().unwrap().iter() {
-            let _ = writeln!(response, "{}: {} votes", choice, num_votes);
+            writeln!(response, "{}: {} votes", choice, num_votes).unwrap();
         }
 
         if response.is_empty() {
@@ -109,7 +112,7 @@ pub async fn boop(ctx: Context<'_>) -> Result<(), Error> {
                 ar.create_button(|b| {
                     b.style(serenity::ButtonStyle::Primary)
                         .label("Boop me!")
-                        .custom_id(uuid_boop)
+                        .custom_id(uuid_boop.to_string())
                 })
             })
         })
@@ -179,7 +182,7 @@ pub async fn test_reuse_response(ctx: Context<'_>) -> Result<(), Error> {
                     b.create_button(|b| {
                         b.label("button 1")
                             .style(serenity::ButtonStyle::Primary)
-                            .custom_id(1)
+                            .custom_id("1")
                     })
                 })
             })
@@ -197,7 +200,7 @@ pub async fn test_reuse_response(ctx: Context<'_>) -> Result<(), Error> {
                     b.create_button(|b| {
                         b.label("button 2")
                             .style(serenity::ButtonStyle::Danger)
-                            .custom_id(2)
+                            .custom_id("2")
                     })
                 })
             })

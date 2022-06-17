@@ -9,8 +9,9 @@ pub use help::*;
 mod register;
 pub use register::*;
 
-use crate::serenity_prelude as serenity;
 use std::fmt::Write as _;
+
+use crate::serenity_prelude as serenity;
 
 /// An error handler that prints the error into the console and also into the Discord chat.
 /// If the user invoked the command wrong ([`crate::FrameworkError::ArgumentParse`]), the command
@@ -187,7 +188,7 @@ pub async fn servers<U, E>(ctx: crate::Context<'_, U, E>) -> Result<(), serenity
     let mut guilds = guild_ids
         .into_iter()
         .filter_map(|guild_id| {
-            ctx.discord().cache.guild_field(guild_id, |guild| Guild {
+            ctx.discord().cache.guild(guild_id).map(|guild| Guild {
                 name: guild.name.clone(),
                 num_members: guild.member_count,
                 is_public: guild.features.iter().any(|x| x == "DISCOVERABLE"),
@@ -201,22 +202,24 @@ pub async fn servers<U, E>(ctx: crate::Context<'_, U, E>) -> Result<(), serenity
     let mut response = format!("I am currently in {} servers!\n", guilds.len());
     for guild in guilds {
         if guild.is_public || show_private_guilds {
-            let _ = writeln!(
+            writeln!(
                 response,
                 "- **{}** ({} members)",
                 guild.name, guild.num_members
-            );
+            )
+            .unwrap();
         } else {
             num_private_guilds += 1;
             num_private_guild_members += guild.num_members;
         }
     }
     if num_private_guilds > 0 {
-        let _ = writeln!(
+        writeln!(
             response,
             "- [{} private servers with {} members total]",
             num_private_guilds, num_private_guild_members
-        );
+        )
+        .unwrap();
     }
 
     if show_private_guilds {

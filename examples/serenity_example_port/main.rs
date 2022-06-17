@@ -434,16 +434,22 @@ async fn about_role(
     ctx: Context<'_>,
     #[description = "Name of the role"] potential_role_name: String,
 ) -> Result<(), Error> {
-    if let Some(guild) = ctx.guild() {
-        // `role_by_name()` allows us to attempt attaining a reference to a role
-        // via its name.
-        if let Some(role) = guild.role_by_name(&potential_role_name) {
-            if let Err(why) = ctx.say(format!("Role-ID: {}", role.id)).await {
-                println!("Error sending message: {:?}", why);
-            }
+    // We avoid cloning anything out of the cache
+    // so have to keep `GuildRef` in it's own scope
+    let to_send = {
+        let guild = ctx.guild();
+        guild
+            .as_ref()
+            .and_then(|g| g.role_by_name(&potential_role_name))
+            .map(|g| format!("Role-ID: {}", g))
+    };
 
-            return Ok(());
+    if let Some(to_send) = to_send {
+        if let Err(why) = ctx.say(to_send).await {
+            println!("Error sending message: {:?}", why);
         }
+
+        return Ok(());
     }
 
     poise::say_reply(

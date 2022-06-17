@@ -1,4 +1,5 @@
 use crate::{Context, Error};
+
 use futures::{Stream, StreamExt};
 use std::fmt::Write as _;
 
@@ -50,7 +51,7 @@ pub async fn greet(
 ) -> Result<(), Error> {
     let mut response = format!("Hello {}", name);
     if let Some(number) = number {
-        let _ = write!(response, "#{}", number);
+        write!(response, "#{}", number).unwrap();
     }
     response += "!";
 
