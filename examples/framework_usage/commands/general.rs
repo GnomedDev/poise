@@ -119,11 +119,12 @@ pub async fn boop(ctx: Context<'_>) -> Result<(), Error> {
     .await?;
 
     let mut boop_count = 0;
-    while let Some(mci) = serenity::CollectComponentInteraction::new(ctx.discord())
+    while let Some(mci) = serenity::CollectorBuilder::<serenity::MessageComponentInteraction>::new(&ctx.discord().shard)
         .author_id(ctx.author().id)
         .channel_id(ctx.channel_id())
         .timeout(std::time::Duration::from_secs(120))
         .filter(move |mci| mci.data.custom_id == uuid_boop.to_string())
+        .collect_single()
         .await
     {
         boop_count += 1;
@@ -163,7 +164,7 @@ pub async fn voiceinfo(
         channel.rtc_region.unwrap_or_default(),
         channel
             .video_quality_mode
-            .unwrap_or(serenity::VideoQualityMode::Unknown)
+            .unwrap_or(serenity::VideoQualityMode::Unknown(!0))
     );
 
     ctx.say(response).await?;
