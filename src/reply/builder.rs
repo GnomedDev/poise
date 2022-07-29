@@ -12,7 +12,7 @@ pub struct CreateReply<'att> {
     /// Message attachments.
     pub attachments: Vec<serenity::AttachmentType<'att>>,
     /// Whether the message is ephemeral (only has an effect in application commands)
-    pub ephemeral: bool,
+    pub ephemeral: Option<bool>,
     /// Message components, that is, buttons and select menus.
     pub components: Option<serenity::CreateComponents>,
     /// The allowed mentions for the message.
@@ -23,7 +23,7 @@ pub struct CreateReply<'att> {
 
 impl<'att> CreateReply<'att> {
     /// Set the content of the message.
-    pub fn content(&mut self, content: impl Into<String>) -> &mut Self {
+    pub fn content(mut self, content: impl Into<String>) -> Self {
         self.content = Some(content.into());
         self
     }
@@ -31,12 +31,7 @@ impl<'att> CreateReply<'att> {
     /// Adds an embed to the message.
     ///
     /// Existing embeds are kept.
-    pub fn embed(
-        &mut self,
-        f: impl FnOnce(&mut serenity::CreateEmbed) -> &mut serenity::CreateEmbed,
-    ) -> &mut Self {
-        let mut embed = serenity::CreateEmbed::default();
-        f(&mut embed);
+    pub fn embed(mut self, embed: serenity::CreateEmbed) -> Self {
         self.embeds.push(embed);
         self
     }
@@ -44,12 +39,7 @@ impl<'att> CreateReply<'att> {
     /// Set components (buttons and select menus) for this message.
     ///
     /// Any previously set components will be overwritten.
-    pub fn components(
-        &mut self,
-        f: impl FnOnce(&mut serenity::CreateComponents) -> &mut serenity::CreateComponents,
-    ) -> &mut Self {
-        let mut components = serenity::CreateComponents::default();
-        f(&mut components);
+    pub fn components(mut self, components: serenity::CreateComponents) -> Self {
         self.components = Some(components);
         self
     }
@@ -57,7 +47,7 @@ impl<'att> CreateReply<'att> {
     /// Add an attachment.
     ///
     /// This will not have an effect in a slash command's initial response!
-    pub fn attachment(&mut self, attachment: serenity::AttachmentType<'att>) -> &mut Self {
+    pub fn attachment(mut self, attachment: serenity::AttachmentType<'att>) -> Self {
         self.attachments.push(attachment);
         self
     }
@@ -70,29 +60,21 @@ impl<'att> CreateReply<'att> {
     /// has previously been deferred, the ephemerality is decided by the defer operation. I.e.
     /// if you deferred the response without enabling ephemeral, the initial response will not be
     /// ephemeral.
-    pub fn ephemeral(&mut self, ephemeral: bool) -> &mut Self {
-        self.ephemeral = ephemeral;
+    pub fn ephemeral(mut self, ephemeral: bool) -> Self {
+        self.ephemeral = Some(ephemeral);
         self
     }
 
     /// Set the allowed mentions for the message.
     ///
     /// See [`serenity::CreateAllowedMentions`] for more information.
-    pub fn allowed_mentions(
-        &mut self,
-        f: impl FnOnce(&mut serenity::CreateAllowedMentions) -> &mut serenity::CreateAllowedMentions,
-    ) -> &mut Self {
-        let mut allowed_mentions = serenity::CreateAllowedMentions::default();
-        f(&mut allowed_mentions);
+    pub fn allowed_mentions(mut self, allowed_mentions: serenity::CreateAllowedMentions) -> Self {
         self.allowed_mentions = Some(allowed_mentions);
         self
     }
 
     /// Set the reference message this message is a reply to.
-    pub fn reference_message(
-        &mut self,
-        reference: impl Into<serenity::MessageReference>,
-    ) -> &mut Self {
+    pub fn reference_message(mut self, reference: impl Into<serenity::MessageReference>) -> Self {
         self.reference_message = Some(reference.into());
         self
     }
@@ -102,7 +84,7 @@ impl<'att> CreateReply<'att> {
 /// internally to actually send a response to Discord
 impl<'att> CreateReply<'att> {
     /// Serialize this response builder to a [`serenity::CreateInteractionResponseData`]
-    pub fn to_slash_initial_response(self, f: &mut serenity::CreateInteractionResponseData<'att>) {
+    pub fn to_slash_initial_response(self) -> serenity::CreateInteractionResponseData<'att> {
         let crate::CreateReply {
             content,
             embeds,
@@ -113,31 +95,25 @@ impl<'att> CreateReply<'att> {
             reference_message: _, // can't reply to a message in interactions
         } = self;
 
+        let mut builder = serenity::CreateInteractionResponseData::default();
         if let Some(content) = content {
-            f.content(content);
+            builder = builder.content(content);
         }
-        f.set_embeds(embeds);
         if let Some(allowed_mentions) = allowed_mentions {
-            f.allowed_mentions(|f| {
-                *f = allowed_mentions.clone();
-                f
-            });
+            builder = builder.allowed_mentions(allowed_mentions);
         }
         if let Some(components) = components {
-            f.components(|f| {
-                f.0 = components.0;
-                f
-            });
+            builder = builder.components(components);
         }
-        f.ephemeral(ephemeral);
-        f.add_files(attachments);
+
+        builder
+            .embeds(embeds)
+            .add_files(attachments)
+            .ephemeral(ephemeral.unwrap_or_default())
     }
 
     /// Serialize this response builder to a [`serenity::CreateInteractionResponseFollowup`]
-    pub fn to_slash_followup_response(
-        self,
-        f: &mut serenity::CreateInteractionResponseFollowup<'att>,
-    ) {
+    pub fn to_slash_followup_response(self) -> serenity::CreateInteractionResponseFollowup<'att> {
         let crate::CreateReply {
             content,
             embeds,
@@ -148,28 +124,25 @@ impl<'att> CreateReply<'att> {
             reference_message: _,
         } = self;
 
+        let mut builder = serenity::CreateInteractionResponseFollowup::default();
         if let Some(content) = content {
-            f.content(content);
+            builder = builder.content(content);
         }
-        f.set_embeds(embeds);
         if let Some(components) = components {
-            f.components(|c| {
-                c.0 = components.0;
-                c
-            });
+            builder = builder.components(components)
         }
         if let Some(allowed_mentions) = allowed_mentions {
-            f.allowed_mentions(|f| {
-                *f = allowed_mentions.clone();
-                f
-            });
+            builder = builder.allowed_mentions(allowed_mentions)
         }
-        f.ephemeral(ephemeral);
-        f.add_files(attachments);
+
+        builder
+            .embeds(embeds)
+            .add_files(attachments)
+            .ephemeral(ephemeral.unwrap_or_default())
     }
 
     /// Serialize this response builder to a [`serenity::EditInteractionResponse`]
-    pub fn to_slash_initial_response_edit(self, f: &mut serenity::EditInteractionResponse) {
+    pub fn to_slash_initial_response_edit(self) -> serenity::EditInteractionResponse {
         let crate::CreateReply {
             content,
             embeds,
@@ -180,26 +153,22 @@ impl<'att> CreateReply<'att> {
             reference_message: _,
         } = self;
 
+        let mut builder = serenity::EditInteractionResponse::default();
         if let Some(content) = content {
-            f.content(content);
+            builder = builder.content(content);
         }
-        f.set_embeds(embeds);
         if let Some(components) = components {
-            f.components(|c| {
-                c.0 = components.0;
-                c
-            });
+            builder = builder.components(components)
         }
         if let Some(allowed_mentions) = allowed_mentions {
-            f.allowed_mentions(|f| {
-                *f = allowed_mentions.clone();
-                f
-            });
+            builder = builder.allowed_mentions(allowed_mentions)
         }
+
+        builder.embeds(embeds)
     }
 
     /// Serialize this response builder to a [`serenity::EditMessage`]
-    pub fn to_prefix_edit(self, f: &mut serenity::EditMessage<'att>) {
+    pub fn to_prefix_edit(self) -> serenity::EditMessage<'att> {
         let crate::CreateReply {
             content,
             embeds,
@@ -210,33 +179,25 @@ impl<'att> CreateReply<'att> {
             reference_message: _, // can't edit reference message afterwards
         } = self;
 
-        // Empty string resets content (happens when user replaces text with embed)
-        f.content(content.unwrap_or_default());
-
-        f.set_embeds(embeds);
-
+        let mut builder = serenity::EditMessage::default();
         for attachment in attachments {
-            f.attachment(attachment);
+            builder = builder.attachment(attachment);
         }
 
         if let Some(allowed_mentions) = allowed_mentions {
-            f.allowed_mentions(|b| {
-                *b = allowed_mentions;
-                b
-            });
+            builder = builder.allowed_mentions(allowed_mentions);
         }
 
-        // When components is None, this will still be run to reset the components.
-        f.components(|f| {
-            if let Some(components) = components {
-                *f = components;
-            }
-            f
-        });
+        builder
+            // Empty string resets content (happens when user replaces text with embed)
+            .content(content.unwrap_or_default())
+            // When components is None, this will still be run to reset the components.
+            .components(components.unwrap_or_default())
+            .embeds(embeds)
     }
 
     /// Serialize this response builder to a [`serenity::CreateMessage`]
-    pub fn to_prefix(self, m: &mut serenity::CreateMessage<'att>) {
+    pub fn to_prefix(self) -> serenity::CreateMessage<'att> {
         let crate::CreateReply {
             content,
             embeds,
@@ -247,28 +208,20 @@ impl<'att> CreateReply<'att> {
             reference_message,
         } = self;
 
+        let mut builder = serenity::CreateMessage::default();
         if let Some(content) = content {
-            m.content(content);
+            builder = builder.content(content);
         }
-        m.set_embeds(embeds);
         if let Some(allowed_mentions) = allowed_mentions {
-            m.allowed_mentions(|m| {
-                *m = allowed_mentions;
-                m
-            });
+            builder = builder.allowed_mentions(allowed_mentions);
         }
         if let Some(components) = components {
-            m.components(|c| {
-                c.0 = components.0;
-                c
-            });
+            builder = builder.components(components)
         }
         if let Some(reference_message) = reference_message {
-            m.reference_message(reference_message);
+            builder = builder.reference_message(reference_message);
         }
 
-        for attachment in attachments {
-            m.add_file(attachment);
-        }
+        builder.embeds(embeds).add_files(attachments)
     }
 }

@@ -78,10 +78,10 @@ pub fn choice_parameter(input: syn::DeriveInput) -> Result<TokenStream, darling:
                 }
             }
 
-            fn create(builder: &mut poise::serenity_prelude::CreateApplicationCommandOption) {
+            fn create(builder: poise::serenity_prelude::CreateApplicationCommandOption) -> poise::serenity_prelude::CreateApplicationCommandOption {
                 builder
                     .kind(poise::serenity_prelude::CommandOptionType::Integer)
-                    #( .add_int_choice(#display_strings, #indices2 as i32) )* ;
+                    #( .add_int_choice(#display_strings, #indices2 as i32) )*
             }
         }
 

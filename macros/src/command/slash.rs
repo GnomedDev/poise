@@ -55,8 +55,7 @@ pub fn generate_parameters(inv: &Invocation) -> Result<Vec<proc_macro2::TokenStr
                         .collect()
                         .await;
 
-                    let mut response = poise::serenity::builder::CreateAutocompleteResponse::default();
-                    response.set_choices(choices_json);
+                    let response = poise::serenity::builder::CreateAutocompleteResponse::default().set_choices(choices_json);
                     Ok(response)
                 })) }
             }
@@ -65,16 +64,16 @@ pub fn generate_parameters(inv: &Invocation) -> Result<Vec<proc_macro2::TokenStr
 
         // We can just cast to f64 here because Discord only uses f64 precision anyways
         let min_value_setter = match &param.args.min {
-            Some(x) => quote::quote! { o.min_number_value(#x as f64); },
+            Some(x) => quote::quote! { .min_number_value(#x as f64) },
             None => quote::quote! {},
         };
         let max_value_setter = match &param.args.max {
-            Some(x) => quote::quote! { o.max_number_value(#x as f64); },
+            Some(x) => quote::quote! { .max_number_value(#x as f64) },
             None => quote::quote! {},
         };
         let type_setter = match inv.args.slash_command {
             true => quote::quote! { Some(|o| {
-                poise::create_slash_argument!(#type_, o);
+                poise::create_slash_argument!(#type_, o)
                 #min_value_setter #max_value_setter
             }) },
             false => quote::quote! { None },

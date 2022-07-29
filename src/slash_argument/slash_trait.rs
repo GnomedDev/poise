@@ -27,7 +27,9 @@ pub trait SlashArgument: Sized {
     /// filling in `name()`, `description()`, and possibly `required()` or other fields.
     ///
     /// Don't call this method directly! Use [`crate::create_slash_argument!`]
-    fn create(builder: &mut serenity::CreateApplicationCommandOption);
+    fn create(
+        builder: serenity::CreateApplicationCommandOption,
+    ) -> serenity::CreateApplicationCommandOption;
 }
 
 /// Implemented for all types that can be used as a function parameter in a slash command.
@@ -44,7 +46,10 @@ pub trait SlashArgumentHack<T> {
         value: &serenity::json::Value,
     ) -> Result<T, SlashArgError>;
 
-    fn create(self, builder: &mut serenity::CreateApplicationCommandOption);
+    fn create(
+        self,
+        builder: serenity::CreateApplicationCommandOption,
+    ) -> serenity::CreateApplicationCommandOption;
 }
 
 /// Full version of [`crate::SlashArgument::extract`].
@@ -97,8 +102,11 @@ where
         })
     }
 
-    fn create(self, builder: &mut serenity::CreateApplicationCommandOption) {
-        builder.kind(serenity::CommandOptionType::String);
+    fn create(
+        self,
+        builder: serenity::CreateApplicationCommandOption,
+    ) -> serenity::CreateApplicationCommandOption {
+        builder.kind(serenity::CommandOptionType::String)
     }
 }
 
@@ -120,11 +128,11 @@ macro_rules! impl_for_integer {
                     .map_err(|_| SlashArgError::CommandStructureMismatch("received out of bounds integer"))
             }
 
-            fn create(self, builder: &mut serenity::CreateApplicationCommandOption) {
+            fn create(self, builder: serenity::CreateApplicationCommandOption) -> serenity::CreateApplicationCommandOption {
                 builder
                     .min_number_value(f64::max(<$t>::MIN as f64, -9007199254740991.))
                     .max_number_value(f64::min(<$t>::MAX as f64, 9007199254740991.))
-                    .kind(serenity::CommandOptionType::Integer);
+                    .kind(serenity::CommandOptionType::Integer)
             }
         }
     )* };
@@ -147,8 +155,8 @@ macro_rules! impl_for_float {
                     .ok_or(SlashArgError::CommandStructureMismatch("expected float"))? as $t)
             }
 
-            fn create(self, builder: &mut serenity::CreateApplicationCommandOption) {
-                builder.kind(serenity::CommandOptionType::Number);
+            fn create(self, builder: serenity::CreateApplicationCommandOption) -> serenity::CreateApplicationCommandOption {
+                builder.kind(serenity::CommandOptionType::Number)
             }
         }
     )* };
@@ -168,8 +176,11 @@ impl SlashArgumentHack<bool> for &PhantomData<bool> {
             .ok_or(SlashArgError::CommandStructureMismatch("expected bool"))?)
     }
 
-    fn create(self, builder: &mut serenity::CreateApplicationCommandOption) {
-        builder.kind(serenity::CommandOptionType::Boolean);
+    fn create(
+        self,
+        builder: serenity::CreateApplicationCommandOption,
+    ) -> serenity::CreateApplicationCommandOption {
+        builder.kind(serenity::CommandOptionType::Boolean)
     }
 }
 
@@ -204,8 +215,11 @@ impl SlashArgumentHack<serenity::Attachment> for &PhantomData<serenity::Attachme
             ))
     }
 
-    fn create(self, builder: &mut serenity::CreateApplicationCommandOption) {
-        builder.kind(serenity::CommandOptionType::Attachment);
+    fn create(
+        self,
+        builder: serenity::CreateApplicationCommandOption,
+    ) -> serenity::CreateApplicationCommandOption {
+        builder.kind(serenity::CommandOptionType::Attachment)
     }
 }
 
@@ -220,8 +234,11 @@ impl<T: SlashArgument + Sync> SlashArgumentHack<T> for &PhantomData<T> {
         <T as SlashArgument>::extract(ctx, interaction, value).await
     }
 
-    fn create(self, builder: &mut serenity::CreateApplicationCommandOption) {
-        <T as SlashArgument>::create(builder);
+    fn create(
+        self,
+        builder: serenity::CreateApplicationCommandOption,
+    ) -> serenity::CreateApplicationCommandOption {
+        <T as SlashArgument>::create(builder)
     }
 }
 
@@ -240,8 +257,11 @@ macro_rules! impl_slash_argument {
                 PhantomData::<$type>.extract(ctx, interaction, value).await
             }
 
-            fn create(self, builder: &mut serenity::CreateApplicationCommandOption) {
-                builder.kind(serenity::CommandOptionType::$slash_param_type);
+            fn create(
+                self,
+                builder: serenity::CreateApplicationCommandOption,
+            ) -> serenity::CreateApplicationCommandOption {
+                builder.kind(serenity::CommandOptionType::$slash_param_type)
             }
         }
     };

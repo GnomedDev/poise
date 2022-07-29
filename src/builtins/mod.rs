@@ -29,6 +29,15 @@ use crate::serenity_prelude as serenity;
 pub async fn on_error<U, E: std::fmt::Display + std::fmt::Debug>(
     error: crate::FrameworkError<'_, U, E>,
 ) -> Result<(), serenity::Error> {
+    #[allow(clippy::missing_docs_in_private_items)]
+    async fn reply_err<U, E>(
+        ctx: crate::Context<'_, U, E>,
+        msg: impl Into<String>,
+    ) -> Result<(), serenity::Error> {
+        let builder = crate::CreateReply::default().content(msg).ephemeral(true);
+        ctx.send(builder).await.map(drop)
+    }
+
     match error {
         crate::FrameworkError::Setup { error } => println!("Error in user data setup: {}", error),
         crate::FrameworkError::Listener { error, event, .. } => println!(
@@ -79,7 +88,8 @@ pub async fn on_error<U, E: std::fmt::Display + std::fmt::Debug>(
                 "You're too fast. Please wait {} seconds before retrying",
                 remaining_cooldown.as_secs()
             );
-            ctx.send(|b| b.content(msg).ephemeral(true)).await?;
+
+            reply_err(ctx, msg).await?;
         }
         crate::FrameworkError::MissingBotPermissions {
             missing_permissions,
@@ -89,7 +99,8 @@ pub async fn on_error<U, E: std::fmt::Display + std::fmt::Debug>(
                 "Command cannot be executed because the bot is lacking permissions: {}",
                 missing_permissions,
             );
-            ctx.send(|b| b.content(msg).ephemeral(true)).await?;
+
+            reply_err(ctx, msg).await?;
         }
         crate::FrameworkError::MissingUserPermissions {
             missing_permissions,
@@ -109,23 +120,23 @@ pub async fn on_error<U, E: std::fmt::Display + std::fmt::Debug>(
                     ctx.command().name,
                 )
             };
-            ctx.send(|b| b.content(response).ephemeral(true)).await?;
+            reply_err(ctx, response).await?;
         }
         crate::FrameworkError::NotAnOwner { ctx } => {
             let response = "Only bot owners can call this command";
-            ctx.send(|b| b.content(response).ephemeral(true)).await?;
+            reply_err(ctx, response).await?;
         }
         crate::FrameworkError::GuildOnly { ctx } => {
             let response = "You cannot run this command in DMs.";
-            ctx.send(|b| b.content(response).ephemeral(true)).await?;
+            reply_err(ctx, response).await?;
         }
         crate::FrameworkError::DmOnly { ctx } => {
             let response = "You cannot run this command outside DMs.";
-            ctx.send(|b| b.content(response).ephemeral(true)).await?;
+            reply_err(ctx, response).await?;
         }
         crate::FrameworkError::NsfwOnly { ctx } => {
             let response = "You cannot run this command outside NSFW channels.";
-            ctx.send(|b| b.content(response).ephemeral(true)).await?;
+            reply_err(ctx, response).await?;
         }
         crate::FrameworkError::DynamicPrefix { error } => {
             println!("Dynamic prefix failed: {}", error);
@@ -226,8 +237,10 @@ pub async fn servers<U, E>(ctx: crate::Context<'_, U, E>) -> Result<(), serenity
         response += "\n_Showing private guilds because you are the bot owner_\n";
     }
 
-    ctx.send(|b| b.content(response).ephemeral(show_private_guilds))
-        .await?;
+    let builder = crate::CreateReply::default()
+        .content(response)
+        .ephemeral(show_private_guilds);
 
+    ctx.send(builder).await?;
     Ok(())
 }

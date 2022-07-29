@@ -73,34 +73,33 @@ impl ReplyHandle<'_> {
     pub async fn edit<'att, U, E>(
         &self,
         ctx: crate::Context<'_, U, E>,
-        builder: impl for<'a> FnOnce(&'a mut CreateReply<'att>) -> &'a mut CreateReply<'att>,
+        mut reply: CreateReply<'att>,
     ) -> Result<(), serenity::Error> {
-        // TODO: deduplicate this block of code
-        let mut reply = crate::CreateReply {
-            ephemeral: ctx.command().ephemeral,
-            allowed_mentions: ctx.framework().options().allowed_mentions.clone(),
-            ..Default::default()
-        };
-        builder(&mut reply);
+        if reply.ephemeral.is_none() {
+            reply.ephemeral = Some(ctx.command().ephemeral);
+        }
+
+        if reply.allowed_mentions.is_none() {
+            reply.allowed_mentions = ctx.framework().options().allowed_mentions.clone()
+        }
+
         if let Some(callback) = ctx.framework().options().reply_callback {
             callback(ctx, &mut reply);
         }
 
         match self {
             Self::Known(msg) => {
-                msg.clone()
-                    .edit(ctx.discord(), |b| {
-                        reply.to_prefix_edit(b);
-                        b
-                    })
+                reply
+                    .to_prefix_edit()
+                    .execute(ctx.discord(), msg.channel_id, msg.id)
                     .await?;
             }
             Self::Unknown { http, interaction } => {
                 interaction
-                    .edit_original_interaction_response(http, |b| {
-                        reply.to_slash_initial_response_edit(b);
-                        b
-                    })
+                    .edit_original_interaction_response(
+                        http,
+                        reply.to_slash_initial_response_edit(),
+                    )
                     .await?;
             }
             Self::Autocomplete => Self::autocomplete_panic(),

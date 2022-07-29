@@ -135,11 +135,15 @@ impl<U, E> ApplicationContext<'_, U, E> {
             .has_sent_initial_response
             .load(std::sync::atomic::Ordering::SeqCst)
         {
+            let data_builder =
+                serenity::CreateInteractionResponseData::default().ephemeral(ephemeral);
+
+            let builder = serenity::CreateInteractionResponse::default()
+                .kind(serenity::InteractionResponseType::DeferredChannelMessageWithSource)
+                .interaction_response_data(data_builder);
+
             interaction
-                .create_interaction_response(self.discord, |f| {
-                    f.kind(serenity::InteractionResponseType::DeferredChannelMessageWithSource)
-                        .interaction_response_data(|b| b.ephemeral(ephemeral))
-                })
+                .create_interaction_response(self.discord, builder)
                 .await?;
             self.has_sent_initial_response
                 .store(true, std::sync::atomic::Ordering::SeqCst);
@@ -200,7 +204,9 @@ pub struct CommandParameter<U, E> {
     /// # ;
     /// ```
     #[derivative(Debug = "ignore")]
-    pub type_setter: Option<fn(&mut serenity::CreateApplicationCommandOption)>,
+    pub type_setter: Option<
+        fn(serenity::CreateApplicationCommandOption) -> serenity::CreateApplicationCommandOption,
+    >,
     /// Optionally, a callback that is invoked on autocomplete interactions. This closure should
     /// extract the partial argument from the given JSON value and generate the autocomplete
     /// response which contains the list of autocomplete suggestions.
@@ -222,16 +228,16 @@ impl<U, E> CommandParameter<U, E> {
     pub fn create_as_slash_command_option(
         &self,
     ) -> Option<serenity::CreateApplicationCommandOption> {
-        let mut builder = serenity::CreateApplicationCommandOption::default();
-        builder
+        let mut builder = serenity::CreateApplicationCommandOption::default()
             .required(self.required)
             .name(self.name)
             .description(self.description?)
             .set_autocomplete(self.autocomplete_callback.is_some());
+
         if let Some(channel_types) = self.channel_types.clone() {
-            builder.channel_types(channel_types);
+            builder = builder.channel_types(channel_types);
         }
-        (self.type_setter?)(&mut builder);
-        Some(builder)
+
+        Some((self.type_setter?)(builder))
     }
 }

@@ -56,8 +56,10 @@ async fn help_single_command<U, E>(
         format!("No such command `{}`", command_name)
     };
 
-    ctx.send(|b| b.content(reply).ephemeral(config.ephemeral))
-        .await?;
+    let builder = crate::CreateReply::default()
+        .content(reply)
+        .ephemeral(config.ephemeral);
+    ctx.send(builder).await?;
     Ok(())
 }
 
@@ -137,8 +139,10 @@ async fn help_all_commands<U, E>(
     menu += config.extra_text_at_bottom;
     menu += "\n```";
 
-    ctx.send(|b| b.content(menu).ephemeral(config.ephemeral))
-        .await?;
+    let builder = crate::CreateReply::default()
+        .content(menu)
+        .ephemeral(config.ephemeral);
+    ctx.send(builder).await?;
     Ok(())
 }
 

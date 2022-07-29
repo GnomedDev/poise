@@ -183,10 +183,7 @@ pub async fn dispatch_autocomplete<'a, U, E>(
 
         // Send the generates autocomplete response
         if let Err(e) = interaction
-            .create_autocomplete_response(&ctx.discord.http, |b| {
-                *b = autocomplete_response;
-                b
-            })
+            .create_autocomplete_response(&ctx.discord.http, autocomplete_response)
             .await
         {
             log::warn!("couldn't send autocomplete response: {}", e);

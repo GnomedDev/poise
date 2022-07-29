@@ -619,11 +619,8 @@ async fn slow_mode(
     #[description = "Minimum time between sending messages per user"] rate_limit: Option<u64>,
 ) -> Result<(), Error> {
     let say_content = if let Some(rate_limit) = rate_limit {
-        if let Err(why) = ctx
-            .channel_id()
-            .edit(ctx.discord(), |c| c.rate_limit_per_user(rate_limit))
-            .await
-        {
+        let edit_builder = serenity::EditChannel::default().rate_limit_per_user(rate_limit);
+        if let Err(why) = ctx.channel_id().edit(ctx.discord(), edit_builder).await {
             println!("Error setting channel's slow mode rate: {:?}", why);
             format!("Failed to set slow mode to `{}` seconds.", rate_limit)
         } else {

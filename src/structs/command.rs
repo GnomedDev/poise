@@ -129,29 +129,29 @@ impl<U, E> Command<U, E> {
         self.slash_action?;
 
         let mut builder = serenity::CreateApplicationCommandOption::default();
-        builder
-            .name(self.name)
-            .description(self.inline_help.unwrap_or("A slash command"));
-
         if self.subcommands.is_empty() {
-            builder.kind(serenity::CommandOptionType::SubCommand);
+            builder = builder.kind(serenity::CommandOptionType::SubCommand);
 
             for param in &self.parameters {
                 // Using `?` because if this command has slash-incompatible parameters, we cannot
                 // just ignore them but have to abort the creation process entirely
-                builder.add_sub_option(param.create_as_slash_command_option()?);
+                builder = builder.add_sub_option(param.create_as_slash_command_option()?);
             }
         } else {
-            builder.kind(serenity::CommandOptionType::SubCommandGroup);
+            builder = builder.kind(serenity::CommandOptionType::SubCommandGroup);
 
             for subcommand in &self.subcommands {
                 if let Some(subcommand) = subcommand.create_as_subcommand() {
-                    builder.add_sub_option(subcommand);
+                    builder = builder.add_sub_option(subcommand);
                 }
             }
         }
 
-        Some(builder)
+        Some(
+            builder
+                .name(self.name)
+                .description(self.inline_help.unwrap_or("A slash command")),
+        )
     }
 
     /// Generates a slash command builder from this [`Command`] instance. This can be used
@@ -160,26 +160,23 @@ impl<U, E> Command<U, E> {
         self.slash_action?;
 
         let mut builder = serenity::CreateApplicationCommand::default();
-        builder
-            .name(self.name)
-            .description(self.inline_help.unwrap_or("A slash command"));
 
         // This is_empty check is needed because Discord special cases empty
         // default_member_permissions to mean "admin-only" (yes it's stupid)
         if !self.default_member_permissions.is_empty() {
-            builder.default_member_permissions(self.default_member_permissions);
+            builder = builder.default_member_permissions(self.default_member_permissions);
         }
 
         if self.subcommands.is_empty() {
             for param in &self.parameters {
                 // Using `?` because if this command has slash-incompatible parameters, we cannot
                 // just ignore them but have to abort the creation process entirely
-                builder.add_option(param.create_as_slash_command_option()?);
+                builder = builder.add_option(param.create_as_slash_command_option()?);
             }
         } else {
             for subcommand in &self.subcommands {
                 if let Some(subcommand) = subcommand.create_as_subcommand() {
-                    builder.add_option(subcommand);
+                    builder = builder.add_option(subcommand);
                 }
             }
         }
@@ -192,15 +189,14 @@ impl<U, E> Command<U, E> {
     pub fn create_as_context_menu_command(&self) -> Option<serenity::CreateApplicationCommand> {
         let context_menu_action = self.context_menu_action?;
 
-        let mut builder = serenity::CreateApplicationCommand::default();
-        builder
-            .name(self.context_menu_name.unwrap_or(self.name))
-            .kind(match context_menu_action {
-                crate::ContextMenuCommandAction::User(_) => serenity::CommandType::User,
-                crate::ContextMenuCommandAction::Message(_) => serenity::CommandType::Message,
-            });
-
-        Some(builder)
+        Some(
+            serenity::CreateApplicationCommand::default()
+                .name(self.context_menu_name.unwrap_or(self.name))
+                .kind(match context_menu_action {
+                    crate::ContextMenuCommandAction::User(_) => serenity::CommandType::User,
+                    crate::ContextMenuCommandAction::Message(_) => serenity::CommandType::Message,
+                }),
+        )
     }
 
     /// **Deprecated**

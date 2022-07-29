@@ -105,21 +105,24 @@ pub async fn choice(
 pub async fn boop(ctx: Context<'_>) -> Result<(), Error> {
     let uuid_boop = ctx.id();
 
-    ctx.send(|m| {
-        m.content("I want some boops!").components(|c| {
-            c.create_action_row(|ar| {
-                ar.create_button(|b| {
-                    b.style(serenity::ButtonStyle::Primary)
-                        .label("Boop me!")
-                        .custom_id(uuid_boop.to_string())
-                })
-            })
-        })
-    })
+    ctx.send(
+        poise::CreateReply::default()
+            .content("I want some boops!")
+            .components(
+                serenity::CreateComponents::default().add_action_row(
+                    serenity::CreateActionRow::default().add_button(
+                        serenity::CreateButton::default()
+                            .style(serenity::ButtonStyle::Primary)
+                            .label("Boop me!")
+                            .custom_id(uuid_boop.to_string()),
+                    ),
+                ),
+            ),
+    )
     .await?;
 
     let mut boop_count = 0;
-    while let Some(mci) = serenity::CollectorBuilder::<serenity::MessageComponentInteraction>::new(&ctx.discord().shard)
+    while let Some(mci) = serenity::ComponentInteractionCollectorBuilder::new(&ctx.discord().shard)
         .author_id(ctx.author().id)
         .channel_id(ctx.channel_id())
         .timeout(std::time::Duration::from_secs(120))

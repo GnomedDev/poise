@@ -97,10 +97,10 @@ where
             post_command: |_| Box::pin(async {}),
             command_check: None,
             allowed_mentions: Some({
-                let mut f = serenity::CreateAllowedMentions::default();
                 // Only support direct user pings by default
-                f.empty_parse().parse(serenity::ParseValue::Users);
-                f
+                serenity::CreateAllowedMentions::default()
+                    .empty_parse()
+                    .parse(serenity::ParseValue::Users)
             }),
             reply_callback: None,
             manual_cooldowns: false,
