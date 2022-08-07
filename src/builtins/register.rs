@@ -21,33 +21,31 @@ use crate::serenity_prelude as serenity;
 /// ```
 pub fn create_application_commands<U, E>(
     commands: &[crate::Command<U, E>],
-) -> serenity::CreateApplicationCommands {
+) -> Vec<serenity::CreateApplicationCommand> {
     /// We decided to extract context menu commands recursively, despite the subcommand hierarchy
     /// not being preserved. Because it's more confusing to just silently discard context menu
     /// commands if they're not top-level commands.
     /// https://discord.com/channels/381880193251409931/919310428344029265/947970605985189989
     fn recursively_add_context_menu_commands<U, E>(
-        mut builder: serenity::CreateApplicationCommands,
+        builder: &mut Vec<serenity::CreateApplicationCommand>,
         command: &crate::Command<U, E>,
-    ) -> serenity::CreateApplicationCommands {
+    ) {
         if let Some(context_menu_command) = command.create_as_context_menu_command() {
-            builder = builder.add_application_command(context_menu_command);
+            builder.push(context_menu_command);
         }
 
         for subcommand in &command.subcommands {
-            builder = recursively_add_context_menu_commands(builder, subcommand);
+            recursively_add_context_menu_commands(builder, subcommand);
         }
-
-        builder
     }
 
-    let mut commands_builder = serenity::CreateApplicationCommands::default();
+    let mut commands_builder = Vec::new();
     for command in commands {
         if let Some(slash_command) = command.create_as_slash_command() {
-            commands_builder = commands_builder.add_application_command(slash_command);
+            commands_builder.push(slash_command);
         }
 
-        commands_builder = recursively_add_context_menu_commands(commands_builder, command);
+        recursively_add_context_menu_commands(&mut commands_builder, command);
     }
 
     commands_builder
@@ -198,11 +196,7 @@ pub async fn register_application_commands_buttons<U, E>(
                 .await?;
         } else {
             ctx.say("Unregistering global commands...").await?;
-            serenity::Command::set_global_application_commands(
-                ctx.discord(),
-                serenity::CreateApplicationCommands::default(),
-            )
-            .await?;
+            serenity::Command::set_global_application_commands(ctx.discord(), Vec::new()).await?;
         }
     } else {
         let guild_id = match ctx.guild_id() {
@@ -221,10 +215,7 @@ pub async fn register_application_commands_buttons<U, E>(
         } else {
             ctx.say("Unregistering guild commands...").await?;
             guild_id
-                .set_application_commands(
-                    ctx.discord(),
-                    serenity::CreateApplicationCommands::default(),
-                )
+                .set_application_commands(ctx.discord(), Vec::new())
                 .await?;
         }
     }
