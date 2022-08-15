@@ -119,41 +119,11 @@ pub async fn send_prefix_reply<'att, U, E>(
         callback(ctx.into(), &mut reply);
     }
 
-    // This must only return None when we _actually_ want to reuse the existing response! There are
-    // no checks later
-    let lock_edit_tracker = || {
-        if ctx.command.reuse_response {
-            if let Some(edit_tracker) = &ctx.framework.options().prefix_options.edit_tracker {
-                return Some(edit_tracker.write().unwrap());
-            }
-        }
-        None
-    };
+    let new_response = ctx
+        .msg
+        .channel_id
+        .send_message(ctx.discord, reply.to_prefix())
+        .await?;
 
-    let existing_response = lock_edit_tracker()
-        .as_mut()
-        .and_then(|t| t.find_bot_response(ctx.msg.id))
-        .cloned();
-
-    Ok(Box::new(if let Some(mut response) = existing_response {
-        response.edit(ctx.discord, reply.to_prefix_edit()).await?;
-
-        // If the entry still exists after the await, update it to the new contents
-        if let Some(mut edit_tracker) = lock_edit_tracker() {
-            edit_tracker.set_bot_response(ctx.msg, response.clone());
-        }
-
-        response
-    } else {
-        let new_response = ctx
-            .msg
-            .channel_id
-            .send_message(ctx.discord, reply.to_prefix())
-            .await?;
-        if let Some(track_edits) = &mut lock_edit_tracker() {
-            track_edits.set_bot_response(ctx.msg, new_response.clone());
-        }
-
-        new_response
-    }))
+    Ok(Box::new(new_response))
 }

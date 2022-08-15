@@ -68,33 +68,33 @@ pub async fn dispatch_event<U: Send + Sync, E>(
                 command.on_error.unwrap_or(framework.options.on_error)(error).await;
             }
         }
-        crate::Event::MessageUpdate { event, .. } => {
-            if let Some(edit_tracker) = &framework.options.prefix_options.edit_tracker {
-                let msg = edit_tracker.write().unwrap().process_message_update(
-                    event,
-                    framework
-                        .options()
-                        .prefix_options
-                        .ignore_edits_if_not_yet_responded,
-                );
+        // crate::Event::MessageUpdate { event, .. } => {
+        //     if let Some(edit_tracker) = &framework.options.prefix_options.edit_tracker {
+        //         let msg = edit_tracker.write().unwrap().process_message_update(
+        //             event,
+        //             framework
+        //                 .options()
+        //                 .prefix_options
+        //                 .ignore_edits_if_not_yet_responded,
+        //         );
 
-                if let Some((msg, previously_tracked)) = msg {
-                    let invocation_data = tokio::sync::Mutex::new(Box::new(()) as _);
-                    if let Err(Some((error, command))) = prefix::dispatch_message(
-                        framework,
-                        ctx,
-                        &msg,
-                        true,
-                        previously_tracked,
-                        &invocation_data,
-                    )
-                    .await
-                    {
-                        command.on_error.unwrap_or(framework.options.on_error)(error).await;
-                    }
-                }
-            }
-        }
+        //         if let Some((msg, previously_tracked)) = msg {
+        //             let invocation_data = tokio::sync::Mutex::new(Box::new(()) as _);
+        //             if let Err(Some((error, command))) = prefix::dispatch_message(
+        //                 framework,
+        //                 ctx,
+        //                 &msg,
+        //                 true,
+        //                 previously_tracked,
+        //                 &invocation_data,
+        //             )
+        //             .await
+        //             {
+        //                 command.on_error.unwrap_or(framework.options.on_error)(error).await;
+        //             }
+        //         }
+        //     }
+        // }
         crate::Event::InteractionCreate {
             interaction: serenity::Interaction::ApplicationCommand(interaction),
         } => {

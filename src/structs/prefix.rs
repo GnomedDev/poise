@@ -100,9 +100,9 @@ pub struct PrefixFrameworkOptions<U, E> {
     >,
     /// Treat a bot mention (a ping) like a prefix
     pub mention_as_prefix: bool,
-    /// If Some, the framework will react to message edits by editing the corresponding bot response
-    /// with the new result.
-    pub edit_tracker: Option<std::sync::RwLock<crate::EditTracker>>,
+    // /// If Some, the framework will react to message edits by editing the corresponding bot response
+    // /// with the new result.
+    // pub edit_tracker: Option<std::sync::RwLock<crate::EditTracker>>,
     /// If the user makes a typo in their message and a subsequent edit creates a valid invocation,
     /// the bot will execute the command if this attribute is set. [`Self::edit_tracker`] does not
     /// need to be set for this.
@@ -146,7 +146,7 @@ impl<U, E> Default for PrefixFrameworkOptions<U, E> {
             dynamic_prefix: None,
             stripped_dynamic_prefix: None,
             mention_as_prefix: true,
-            edit_tracker: None,
+            // edit_tracker: None,
             execute_untracked_edits: true,
             ignore_edits_if_not_yet_responded: false,
             execute_self_messages: false,

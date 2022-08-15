@@ -119,13 +119,13 @@ pub async fn only_in_dms(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// Only runs on NSFW channels
-#[poise::command(prefix_command, slash_command, nsfw_only)]
-pub async fn lennyface(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.say("( ͡° ͜ʖ ͡°)").await?;
+// /// Only runs on NSFW channels
+// #[poise::command(prefix_command, slash_command, nsfw_only)]
+// pub async fn lennyface(ctx: Context<'_>) -> Result<(), Error> {
+//     ctx.say("( ͡° ͜ʖ ͡°)").await?;
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 /// Utilizes the permissions v2 `default_member_permissions` field
 #[poise::command(slash_command, default_member_permissions = "ADMINISTRATOR")]

@@ -131,10 +131,10 @@ impl<U, E> Framework<U, E> {
             .take()
             .expect("Prepared client is missing");
 
+        // let edit_tracker_purge_task = spawn_edit_tracker_purge_task(self);
         // This will run for as long as the bot is active
-        let edit_tracker_purge_task = spawn_edit_tracker_purge_task(self);
         start(client).await?;
-        edit_tracker_purge_task.abort();
+        // edit_tracker_purge_task.abort();
 
         Ok(())
     }
@@ -280,24 +280,24 @@ pub async fn insert_owners_from_http(
     Ok(())
 }
 
-/// Spawns a background task that periodically purges outdated entries from the edit tracker cache
-///
-/// Important to avoid the edit tracker gobbling up unlimited memory
-///
-/// NOT PUB because it's not useful to outside users because it requires a full blown Framework
-/// Because e.g. taking a PrefixFrameworkOptions reference won't work because tokio tasks need to be
-/// 'static
-fn spawn_edit_tracker_purge_task<U: 'static + Send + Sync, E: 'static>(
-    framework: std::sync::Arc<Framework<U, E>>,
-) -> tokio::task::JoinHandle<()> {
-    tokio::spawn(async move {
-        if let Some(edit_tracker) = &framework.options.prefix_options.edit_tracker {
-            loop {
-                edit_tracker.write().unwrap().purge();
+// /// Spawns a background task that periodically purges outdated entries from the edit tracker cache
+// ///
+// /// Important to avoid the edit tracker gobbling up unlimited memory
+// ///
+// /// NOT PUB because it's not useful to outside users because it requires a full blown Framework
+// /// Because e.g. taking a PrefixFrameworkOptions reference won't work because tokio tasks need to be
+// /// 'static
+// fn spawn_edit_tracker_purge_task<U: 'static + Send + Sync, E: 'static>(
+//     framework: std::sync::Arc<Framework<U, E>>,
+// ) -> tokio::task::JoinHandle<()> {
+//     tokio::spawn(async move {
+//         if let Some(edit_tracker) = &framework.options.prefix_options.edit_tracker {
+//             loop {
+//                 edit_tracker.write().unwrap().purge();
 
-                // not sure if the purging interval should be configurable
-                tokio::time::sleep(std::time::Duration::from_secs(60)).await;
-            }
-        }
-    })
-}
+//                 // not sure if the purging interval should be configurable
+//                 tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+//             }
+//         }
+//     })
+// }

@@ -80,8 +80,8 @@ pub struct Command<U, E> {
     pub guild_only: bool,
     /// If true, the command may only run in DMs
     pub dm_only: bool,
-    /// If true, the command may only run in NSFW channels
-    pub nsfw_only: bool,
+    // /// If true, the command may only run in NSFW channels
+    // pub nsfw_only: bool,
     /// Command-specific override for [`crate::FrameworkOptions::on_error`]
     #[derivative(Debug = "ignore")]
     pub on_error: Option<fn(crate::FrameworkError<'_, U, E>) -> BoxFuture<'_, ()>>,
