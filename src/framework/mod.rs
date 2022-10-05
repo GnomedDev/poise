@@ -159,6 +159,11 @@ impl<U, E> Framework<U, E> {
             .await
     }
 
+    /// Return the stored bot_id, initialised on the first Ready event
+    pub fn bot_id(&self) -> &once_cell::sync::OnceCell<serenity::UserId> {
+        &self.bot_id
+    }
+
     /// Return the stored framework options, including commands.
     pub fn options(&self) -> &crate::FrameworkOptions<U, E> {
         &self.options
