@@ -3,6 +3,7 @@
 use super::SlashArgError;
 use std::convert::TryInto as _;
 use std::marker::PhantomData;
+use std::ops::Deref;
 
 #[allow(unused_imports)] // import is required if serenity simd_json feature is enabled
 use crate::serenity::json::prelude::*;
@@ -16,7 +17,7 @@ pub trait SlashArgument: Sized {
     ///
     /// Don't call this method directly! Use [`crate::extract_slash_argument!`]
     async fn extract(
-        ctx: &serenity::CacheAndHttp,
+        ctx: &serenity::Context,
         interaction: crate::CommandOrAutocompleteInteraction<'_>,
         value: &serenity::ResolvedValue<'_>,
     ) -> Result<Self, SlashArgError>;
@@ -44,7 +45,7 @@ pub trait SlashArgument: Sized {
 pub trait SlashArgumentHack<T>: Sized {
     async fn extract(
         self,
-        ctx: &serenity::CacheAndHttp,
+        ctx: &serenity::Context,
         interaction: crate::CommandOrAutocompleteInteraction<'_>,
         value: &serenity::ResolvedValue<'_>,
     ) -> Result<T, SlashArgError>;
@@ -99,7 +100,7 @@ where
 {
     async fn extract(
         self,
-        ctx: &serenity::CacheAndHttp,
+        ctx: &serenity::Context,
         interaction: crate::CommandOrAutocompleteInteraction<'_>,
         value: &serenity::ResolvedValue<'_>,
     ) -> Result<T, SlashArgError> {
@@ -108,7 +109,7 @@ where
             _ => return Err(SlashArgError::CommandStructureMismatch("expected string")),
         };
         T::convert(
-            ctx,
+            (&ctx.cache, ctx.http.deref()),
             interaction.guild_id(),
             Some(interaction.channel_id()),
             string,
@@ -132,7 +133,7 @@ macro_rules! impl_for_integer {
         impl SlashArgumentHack<$t> for &PhantomData<$t> {
             async fn extract(
                 self,
-                _: &serenity::CacheAndHttp,
+                _: &serenity::Context,
                 _: crate::CommandOrAutocompleteInteraction<'_>,
                 value: &serenity::ResolvedValue<'_>,
             ) -> Result<$t, SlashArgError> {
@@ -161,7 +162,7 @@ impl_for_integer!(i8 i16 i32 i64 isize u8 u16 u32 u64 usize);
 impl<T: SlashArgument + Sync> SlashArgumentHack<T> for &PhantomData<T> {
     async fn extract(
         self,
-        ctx: &serenity::CacheAndHttp,
+        ctx: &serenity::Context,
         interaction: crate::CommandOrAutocompleteInteraction<'_>,
         value: &serenity::ResolvedValue<'_>,
     ) -> Result<T, SlashArgError> {
@@ -184,7 +185,7 @@ macro_rules! impl_slash_argument {
         impl SlashArgumentHack<$type> for &PhantomData<$type> {
             async fn extract(
                 self,
-                $ctx: &serenity::CacheAndHttp,
+                $ctx: &serenity::Context,
                 $interaction: crate::CommandOrAutocompleteInteraction<'_>,
                 value: &serenity::ResolvedValue<'_>,
             ) -> Result<$type, SlashArgError> {

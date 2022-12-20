@@ -23,13 +23,13 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 async fn event_listener(
     _ctx: &serenity::Context,
-    event: &poise::Event,
+    event: &serenity::Event,
     _framework: poise::FrameworkContext<'_, Data, Error>,
     _user_data: &Data,
 ) -> Result<(), Error> {
     match event {
-        poise::Event::Ready { data_about_bot } => {
-            println!("{} is connected!", data_about_bot.user.name)
+        serenity::Event::Ready(event) => {
+            println!("{} is connected!", event.ready.user.name)
         }
         _ => {}
     }

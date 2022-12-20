@@ -145,7 +145,7 @@ impl<U: Send + Sync, E: Send> serenity::Framework for Framework<U, E> {
 
         if self.options.initialize_owners {
             if let Err(e) =
-                insert_owners_from_http(&client.cache_and_http.http, &mut self.options.owners).await
+                insert_owners_from_http(&client.http, &mut self.options.owners).await
             {
                 log::warn!("Failed to insert owners from HTTP: {}", e);
             }
