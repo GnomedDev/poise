@@ -110,6 +110,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bool_to_bitflags"
+version = "0.1.0"
+source = "git+https://github.com/GnomedDev/bool-to-bitflags#060eae221ff488fcad856ba31642c1266e5d4b47"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1326,12 +1337,13 @@ dependencies = [
 [[package]]
 name = "serenity"
 version = "0.12.0"
-source = "git+https://github.com/serenity-rs/serenity?branch=next#9da2a4422685ce152df79d40e8d4b27ea14bba31"
+source = "git+https://github.com/GnomedDev/serenity?branch=bool_to_bitflags#16138323d9c7f282befe75e8e5f79b33f9da6d59"
 dependencies = [
  "arrayvec",
  "async-trait",
  "base64",
  "bitflags 2.4.1",
+ "bool_to_bitflags",
  "bytes",
  "chrono",
  "dashmap",
