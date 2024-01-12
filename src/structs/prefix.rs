@@ -21,7 +21,7 @@ pub enum MessageDispatchTrigger {
 /// Contains the trigger message, the Discord connection management stuff, and the user data.
 #[derive(derivative::Derivative)]
 #[derivative(Debug(bound = ""))]
-pub struct PrefixContext<'a, U, E> {
+pub struct PrefixContext<'a, U: 'static, E> {
     /// Serenity's context, like HTTP or cache
     #[derivative(Debug = "ignore")]
     pub serenity_context: &'a serenity::Context,

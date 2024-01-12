@@ -8,7 +8,7 @@ use crate::BoxFuture;
 /// If one of the following required values is missing, the builder will panic on start:
 /// - [`Self::setup`]
 /// - [`Self::options`]
-pub struct FrameworkBuilder<U, E> {
+pub struct FrameworkBuilder<U: 'static, E> {
     /// Callback for startup code and user data creation
     setup: Option<
         Box<

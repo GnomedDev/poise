@@ -5,7 +5,7 @@ use crate::{serenity_prelude as serenity, BoxFuture};
 /// Framework configuration
 #[derive(derivative::Derivative)]
 #[derivative(Debug(bound = ""))]
-pub struct FrameworkOptions<U, E> {
+pub struct FrameworkOptions<U: 'static, E> {
     /// List of commands in the framework
     pub commands: Vec<crate::Command<U, E>>,
     /// Provide a callback to be invoked when any user code yields an error.

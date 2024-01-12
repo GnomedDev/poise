@@ -8,7 +8,7 @@ use crate::serenity_prelude as serenity;
 /// These errors are handled with the [`crate::FrameworkOptions::on_error`] callback
 #[derive(derivative::Derivative)]
 #[derivative(Debug)]
-pub enum FrameworkError<'a, U, E> {
+pub enum FrameworkError<'a, U: 'static, E> {
     /// User code threw an error in user data setup
     #[non_exhaustive]
     Setup {

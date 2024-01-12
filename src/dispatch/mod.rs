@@ -59,7 +59,7 @@ impl<'a, U, E> FrameworkContext<'a, U, E> {
 }
 
 /// Central event handling function of this library
-pub async fn dispatch_event<U: Send + Sync, E>(
+pub async fn dispatch_event<U: 'static + Send + Sync, E>(
     framework: crate::FrameworkContext<'_, U, E>,
     ctx: &serenity::Context,
     event: serenity::FullEvent,

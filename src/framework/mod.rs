@@ -18,9 +18,9 @@ mod builder;
 /// - keeps track of shard manager and bot ID automatically
 ///
 /// You can build a bot without [`Framework`]: see the `manual_dispatch` example in the repository
-pub struct Framework<U, E> {
+pub struct Framework<U: 'static, E> {
     /// Stores user data. Is initialized on first Ready event
-    user_data: std::sync::OnceLock<U>,
+    user_data: std::sync::OnceLock<&'static mut U>,
     /// Stores bot ID. Is initialized on first Ready event
     bot_id: std::sync::OnceLock<serenity::UserId>,
     /// Stores the framework options
@@ -169,7 +169,7 @@ async fn raw_dispatch_event<U, E>(
         if let Some(setup) = setup {
             match setup(&ctx, data_about_bot, framework).await {
                 Ok(user_data) => {
-                    let _: Result<_, _> = framework.user_data.set(user_data);
+                    let _: Result<_, _> = framework.user_data.set(Box::leak(Box::new(user_data)));
                 }
                 Err(error) => {
                     (framework.options.on_error)(crate::FrameworkError::Setup {

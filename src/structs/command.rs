@@ -6,7 +6,7 @@ use crate::{serenity_prelude as serenity, BoxFuture};
 /// prefix and application commands
 #[derive(derivative::Derivative)]
 #[derivative(Default(bound = ""), Debug(bound = ""))]
-pub struct Command<U, E> {
+pub struct Command<U: 'static, E> {
     // =============
     /// Callback to execute when this command is invoked in a prefix context
     #[derivative(Debug = "ignore")]
