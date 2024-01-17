@@ -126,7 +126,7 @@ impl<U, E> Drop for Framework<U, E> {
 }
 
 #[serenity::async_trait]
-impl<U: Send + Sync, E: Send + Sync> serenity::Framework for Framework<U, E> {
+impl<U: Send + Sync + 'static, E: Send + Sync> serenity::Framework for Framework<U, E> {
     async fn init(&mut self, client: &serenity::Client) {
         set_qualified_names(&mut self.options.commands);
 
@@ -161,7 +161,7 @@ async fn raw_dispatch_event<U, E>(
     ctx: serenity::Context,
     event: serenity::FullEvent,
 ) where
-    U: Send + Sync,
+    U: Send + Sync + 'static,
 {
     if let serenity::FullEvent::Ready { data_about_bot } = &event {
         let _: Result<_, _> = framework.bot_id.set(data_about_bot.user.id);
@@ -187,7 +187,6 @@ async fn raw_dispatch_event<U, E>(
         }
     }
 
-    let user_data = framework.user_data().await;
     #[cfg(not(feature = "cache"))]
     let bot_id = *framework
         .bot_id
@@ -198,7 +197,6 @@ async fn raw_dispatch_event<U, E>(
         bot_id,
         serenity_context: &ctx,
         options: &framework.options,
-        user_data,
         shard_manager: framework.shard_manager(),
     };
     crate::dispatch_event(framework, event).await;

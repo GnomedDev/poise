@@ -47,7 +47,7 @@ async fn event_handler(
     framework: poise::FrameworkContext<'_, Data, Error>,
     event: &serenity::FullEvent,
 ) -> Result<(), Error> {
-    let data = framework.user_data;
+    let data = framework.user_data();
     let ctx = framework.serenity_context;
 
     match event {
