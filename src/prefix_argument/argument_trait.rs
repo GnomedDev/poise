@@ -2,9 +2,11 @@
 //! the auto-deref specialization emulation code to e.g. support more strings for bool parameters
 //! instead of the `FromStr` ones
 
+use std::future::Future;
+use std::marker::PhantomData;
+
 use super::{pop_string, InvalidBool, MissingAttachment, TooFewArguments};
 use crate::serenity_prelude as serenity;
-use std::marker::PhantomData;
 
 /// Full version of [`crate::PopArgument::pop_from`].
 ///
@@ -25,7 +27,6 @@ macro_rules! pop_prefix_argument {
 /// sake and also because it keeps open the possibility of parsing whitespace.
 ///
 /// Similar in spirit to [`std::str::FromStr`].
-#[async_trait::async_trait]
 pub trait PopArgument<'a>: Sized {
     /// Parse [`Self`] from the front of the given string and return a tuple of the remaining string
     /// and [`Self`]. If parsing failed, an error is returned and, if applicable, the string on
@@ -34,27 +35,35 @@ pub trait PopArgument<'a>: Sized {
     /// If parsing fails because the string is empty, use the `TooFewArguments` type as the error.
     ///
     /// Don't call this method directly! Use [`crate::pop_prefix_argument!`]
-    async fn pop_from(
+    fn pop_from(
         args: &'a str,
         attachment_index: usize,
         ctx: &serenity::Context,
         msg: &serenity::Message,
-    ) -> Result<(&'a str, usize, Self), (Box<dyn std::error::Error + Send + Sync>, Option<String>)>;
+    ) -> impl Future<
+        Output = Result<
+            (&'a str, usize, Self),
+            (Box<dyn std::error::Error + Send + Sync>, Option<String>),
+        >,
+    >;
 }
 
 #[doc(hidden)]
-#[async_trait::async_trait]
 pub trait PopArgumentHack<'a, T>: Sized {
-    async fn pop_from(
+    fn pop_from(
         self,
         args: &'a str,
         attachment_index: usize,
         ctx: &serenity::Context,
         msg: &serenity::Message,
-    ) -> Result<(&'a str, usize, T), (Box<dyn std::error::Error + Send + Sync>, Option<String>)>;
+    ) -> impl Future<
+        Output = Result<
+            (&'a str, usize, T),
+            (Box<dyn std::error::Error + Send + Sync>, Option<String>),
+        >,
+    >;
 }
 
-#[async_trait::async_trait]
 impl<'a, T: serenity::ArgumentConvert + Send> PopArgumentHack<'a, T> for PhantomData<T>
 where
     T::Err: std::error::Error + Send + Sync + 'static,
@@ -77,7 +86,6 @@ where
     }
 }
 
-#[async_trait::async_trait]
 impl<'a, T: PopArgument<'a> + Send + Sync> PopArgumentHack<'a, T> for &PhantomData<T> {
     async fn pop_from(
         self,
@@ -91,7 +99,6 @@ impl<'a, T: PopArgument<'a> + Send + Sync> PopArgumentHack<'a, T> for &PhantomDa
     }
 }
 
-#[async_trait::async_trait]
 impl<'a> PopArgumentHack<'a, bool> for &PhantomData<bool> {
     async fn pop_from(
         self,
@@ -114,7 +121,6 @@ impl<'a> PopArgumentHack<'a, bool> for &PhantomData<bool> {
     }
 }
 
-#[async_trait::async_trait]
 impl<'a> PopArgumentHack<'a, serenity::Attachment> for &PhantomData<serenity::Attachment> {
     async fn pop_from(
         self,
