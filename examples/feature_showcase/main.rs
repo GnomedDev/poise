@@ -19,16 +19,23 @@ mod subcommand_required;
 mod subcommands;
 mod track_edits;
 
+use std::sync::{Arc, OnceLock};
+
 use poise::serenity_prelude as serenity;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 // User data, which is stored and accessible in all command invocations
-pub struct Data {}
+pub struct Data {
+    shard_manager: Arc<serenity::ShardManager>,
+}
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
+
+    let shard_manager_cell = Arc::new(OnceLock::<Arc<serenity::ShardManager>>::new());
+    let shard_manager_clone = shard_manager_cell.clone();
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -106,7 +113,9 @@ async fn main() {
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {})
+
+                let shard_manager = shard_manager_clone.get().unwrap().clone();
+                Ok(Data { shard_manager })
             })
         })
         .build();
@@ -115,9 +124,14 @@ async fn main() {
     let intents =
         serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
-    let client = serenity::ClientBuilder::new(token, intents)
+    let mut client = serenity::ClientBuilder::new(token, intents)
         .framework(framework)
-        .await;
+        .await
+        .unwrap();
 
-    client.unwrap().start().await.unwrap()
+    shard_manager_cell
+        .set(client.shard_manager.clone())
+        .expect("This should be the only call to .set");
+
+    client.start().await.unwrap()
 }

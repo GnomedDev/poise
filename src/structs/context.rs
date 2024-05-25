@@ -515,20 +515,6 @@ context_methods! {
     (pub fn http(self) -> &'a serenity::Http) {
         &self.serenity_context().http
     }
-
-    /// Returns the current gateway heartbeat latency ([`::serenity::gateway::Shard::latency()`]).
-    ///
-    /// If the shard has just connected, this value is zero.
-    await (ping self)
-    (pub async fn ping(self) -> std::time::Duration) {
-        match self.framework().shard_manager.runners.lock().await.get(&self.serenity_context().shard_id) {
-            Some(runner) => runner.latency.unwrap_or(std::time::Duration::ZERO),
-            None => {
-                tracing::error!("current shard is not in shard_manager.runners, this shouldn't happen");
-                std::time::Duration::ZERO
-            }
-        }
-    }
 }
 
 impl<'a, U, E> Context<'a, U, E> {
