@@ -67,7 +67,7 @@ impl<U, E> Framework<U, E> {
     /// user ID or connected guilds can be made available to the user data setup function. The user
     /// data setup is not allowed to return Result because there would be no reasonable
     /// course of action on error.
-    pub fn new<F>(options: crate::FrameworkOptions<U, E>, setup: F) -> Self
+    pub fn new<F>(mut options: crate::FrameworkOptions<U, E>, setup: F) -> Self
     where
         F: Send
             + Sync
@@ -80,11 +80,16 @@ impl<U, E> Framework<U, E> {
         U: Send + Sync + 'static,
         E: Send + 'static,
     {
+        let edit_tracker = options.prefix_options.edit_tracker.clone();
+        let edit_tracker_purge_task = edit_tracker.map(spawn_edit_tracker_purge_task);
+
+        set_qualified_names(&mut options.commands);
+
         Self {
             user_data: std::sync::OnceLock::new(),
             bot_id: std::sync::OnceLock::new(),
             setup: std::sync::Mutex::new(Some(Box::new(setup))),
-            edit_tracker_purge_task: None,
+            edit_tracker_purge_task,
             options,
         }
     }
@@ -117,8 +122,6 @@ impl<U, E> Drop for Framework<U, E> {
 #[serenity::async_trait]
 impl<U: Send + Sync, E: Send + Sync> serenity::Framework for Framework<U, E> {
     async fn init(&mut self, client: &serenity::Client) {
-        set_qualified_names(&mut self.options.commands);
-
         message_content_intent_sanity_check(
             &self.options.prefix_options,
             client.shard_manager.intents(),
@@ -128,11 +131,6 @@ impl<U: Send + Sync, E: Send + Sync> serenity::Framework for Framework<U, E> {
             if let Err(e) = insert_owners_from_http(&client.http, &mut self.options.owners).await {
                 tracing::warn!("Failed to insert owners from HTTP: {e}");
             }
-        }
-
-        if let Some(edit_tracker) = &self.options.prefix_options.edit_tracker {
-            self.edit_tracker_purge_task =
-                Some(spawn_edit_tracker_purge_task(edit_tracker.clone()));
         }
     }
 
