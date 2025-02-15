@@ -12,9 +12,9 @@ use crate::{Context, Error};
 //
 // As the return value of autocomplete functions, you must return `serenity::CreateAutocompleteResponse`.
 
-async fn autocomplete_name<'a>(
+async fn autocomplete_name(
     _ctx: Context<'_>,
-    partial: &'a str,
+    partial: &str,
 ) -> serenity::CreateAutocompleteResponse {
     let choices = ["Amanda", "Bob", "Christian", "Danny", "Ester", "Falk"]
         .into_iter()
