@@ -203,21 +203,9 @@ pub fn generate_slash_action(inv: &Invocation) -> Result<proc_macro2::TokenStrea
     })
 }
 
-pub fn generate_context_menu_action(
-    inv: &Invocation,
-) -> Result<proc_macro2::TokenStream, syn::Error> {
-    let param_type = match &*inv.parameters {
-        [single_param] => &single_param.type_,
-        _ => {
-            return Err(syn::Error::new(
-                inv.function.sig.inputs.span(),
-                "Context menu commands require exactly one parameter",
-            ))
-        }
-    };
-
-    Ok(quote::quote! {
-        <#param_type as ::poise::ContextMenuParameter<_, _>>::to_action(|ctx, value| {
+pub fn generate_context_menu_action() -> proc_macro2::TokenStream {
+    quote::quote! {
+        <_ as ::poise::ContextMenuCommandSignature<_, _>>::to_action(|ctx, value| {
             Box::pin(async move {
                 let is_framework_cooldown = !ctx.command.manual_cooldowns
                     .unwrap_or_else(|| ctx.framework.options.manual_cooldowns);
@@ -234,5 +222,5 @@ pub fn generate_context_menu_action(
                     ))
             })
         })
-    })
+    }
 }

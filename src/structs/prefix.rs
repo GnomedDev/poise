@@ -47,9 +47,7 @@ pub struct PrefixContext<'a, U, E> {
     pub trigger: MessageDispatchTrigger,
     /// The function that is called to execute the actual command
     #[derivative(Debug = "ignore")]
-    pub action: fn(
-        PrefixContext<'_, U, E>,
-    ) -> crate::BoxFuture<'_, Result<(), crate::FrameworkError<'_, U, E>>>,
+    pub action: fn(PrefixContext<'_, U, E>) -> super::CommandFuture<'_, U, E>,
 
     // #[non_exhaustive] forbids struct update syntax for ?? reason
     #[doc(hidden)]

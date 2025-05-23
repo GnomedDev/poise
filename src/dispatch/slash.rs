@@ -123,24 +123,24 @@ async fn run_command<U, E>(
         serenity::CommandType::User => {
             match (
                 ctx.command.context_menu_action,
-                &ctx.interaction.data.target(),
+                ctx.interaction.data.target(),
             ) {
                 (
                     Some(crate::ContextMenuCommandAction::User(action)),
-                    Some(serenity::ResolvedTarget::User(user, _)),
-                ) => action(ctx, (*user).clone()).await,
+                    Some(serenity::ResolvedTarget::User(user, member)),
+                ) => action(ctx, user, member).await,
                 _ => return Err(command_structure_mismatch_error),
             }
         }
         serenity::CommandType::Message => {
             match (
                 ctx.command.context_menu_action,
-                &ctx.interaction.data.target(),
+                ctx.interaction.data.target(),
             ) {
                 (
                     Some(crate::ContextMenuCommandAction::Message(action)),
                     Some(serenity::ResolvedTarget::Message(message)),
-                ) => action(ctx, (*message).clone()).await,
+                ) => action(ctx, message).await,
                 _ => return Err(command_structure_mismatch_error),
             }
         }

@@ -552,15 +552,15 @@ impl<'a, U, E> Context<'a, U, E> {
                 ) {
                     return match action {
                         crate::ContextMenuCommandAction::User(action) => {
-                            if let serenity::ResolvedTarget::User(user, _) = target {
-                                action(ctx, (*user).clone()).await
+                            if let serenity::ResolvedTarget::User(user, member) = target {
+                                action(ctx, user, *member).await
                             } else {
                                 Ok(())
                             }
                         }
                         crate::ContextMenuCommandAction::Message(action) => {
                             if let serenity::ResolvedTarget::Message(message) = target {
-                                action(ctx, (*message).clone()).await
+                                action(ctx, message).await
                             } else {
                                 Ok(())
                             }

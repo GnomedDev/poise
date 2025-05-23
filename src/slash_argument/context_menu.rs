@@ -1,37 +1,25 @@
-//! Contains a simple trait, implemented for all context menu command compatible parameter types
-use crate::serenity_prelude as serenity;
-use crate::BoxFuture;
+//! Contains a simple trait, implemented for all context menu command actionss
+use crate::{ContextMenuCommandAction, MessageContextAction, UserContextAction};
 
-/// Implemented for all types that can be used in a context menu command
-pub trait ContextMenuParameter<U, E> {
-    /// Convert an action function pointer that takes Self as an argument into the appropriate
-    /// [`crate::ContextMenuCommandAction`] variant.
-    fn to_action(
-        action: fn(
-            crate::ApplicationContext<'_, U, E>,
-            Self,
-        ) -> BoxFuture<'_, Result<(), crate::FrameworkError<'_, U, E>>>,
-    ) -> crate::ContextMenuCommandAction<U, E>;
+/// Implemented for all function types which are valid context menu actions.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a valid context menu command signature",
+    note = "try `fn(Context, &Message)` for a Message context command",
+    note = "try `fn(Context, &User, Option<&PartialMember>)` for a User context command"
+)]
+pub trait ContextMenuCommandSignature<U, E> {
+    /// Convert an action function pointer into a [`ContextMenuCommandAction`]
+    fn to_action(self) -> ContextMenuCommandAction<U, E>;
 }
 
-impl<U, E> ContextMenuParameter<U, E> for serenity::User {
-    fn to_action(
-        action: fn(
-            crate::ApplicationContext<'_, U, E>,
-            Self,
-        ) -> BoxFuture<'_, Result<(), crate::FrameworkError<'_, U, E>>>,
-    ) -> crate::ContextMenuCommandAction<U, E> {
-        crate::ContextMenuCommandAction::User(action)
+impl<U, E> ContextMenuCommandSignature<U, E> for UserContextAction<U, E> {
+    fn to_action(self) -> ContextMenuCommandAction<U, E> {
+        ContextMenuCommandAction::User(self)
     }
 }
 
-impl<U, E> ContextMenuParameter<U, E> for serenity::Message {
-    fn to_action(
-        action: fn(
-            crate::ApplicationContext<'_, U, E>,
-            Self,
-        ) -> BoxFuture<'_, Result<(), crate::FrameworkError<'_, U, E>>>,
-    ) -> crate::ContextMenuCommandAction<U, E> {
-        crate::ContextMenuCommandAction::Message(action)
+impl<U, E> ContextMenuCommandSignature<U, E> for MessageContextAction<U, E> {
+    fn to_action(self) -> ContextMenuCommandAction<U, E> {
+        ContextMenuCommandAction::Message(self)
     }
 }

@@ -274,7 +274,7 @@ fn generate_command(mut inv: Invocation) -> Result<proc_macro2::TokenStream, dar
         false => None,
     });
     let context_menu_action = wrap_option(match &inv.args.context_menu_command {
-        Some(_) => Some(slash::generate_context_menu_action(&inv)?),
+        Some(_) => Some(slash::generate_context_menu_action()),
         None => None,
     });
 

@@ -2,7 +2,7 @@
 
 use crate::{serenity_prelude as serenity, BoxFuture};
 
-use super::{CowStr, CowVec};
+use super::{CommandFuture, CowStr, CowVec};
 
 /// Specifies if the current invokation is from a Command or Autocomplete.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -79,29 +79,31 @@ impl<U, E> ApplicationContext<'_, U, E> {
     }
 }
 
+/// Inner type of a User Context Menu action
+pub(crate) type UserContextAction<U, E> = for<'ctx> fn(
+    ApplicationContext<'ctx, U, E>,
+    &'ctx serenity::User,
+    Option<&'ctx serenity::PartialMember>,
+) -> CommandFuture<'ctx, U, E>;
+
+/// Inner type of a Message Context Menu action
+pub(crate) type MessageContextAction<U, E> = for<'ctx> fn(
+    ApplicationContext<'ctx, U, E>,
+    &'ctx serenity::Message,
+) -> CommandFuture<'ctx, U, E>;
+
 /// Possible actions that a context menu entry can have
 #[derive(derivative::Derivative)]
 #[derivative(Debug(bound = ""))]
 pub enum ContextMenuCommandAction<U, E> {
     /// Context menu entry on a user
-    User(
-        #[derivative(Debug = "ignore")]
-        fn(
-            ApplicationContext<'_, U, E>,
-            serenity::User,
-        ) -> BoxFuture<'_, Result<(), crate::FrameworkError<'_, U, E>>>,
-    ),
+    User(#[derivative(Debug = "ignore")] UserContextAction<U, E>),
     /// Context menu entry on a message
-    Message(
-        #[derivative(Debug = "ignore")]
-        fn(
-            ApplicationContext<'_, U, E>,
-            serenity::Message,
-        ) -> BoxFuture<'_, Result<(), crate::FrameworkError<'_, U, E>>>,
-    ),
+    Message(#[derivative(Debug = "ignore")] MessageContextAction<U, E>),
     #[doc(hidden)]
     __NonExhaustive,
 }
+
 impl<U, E> Copy for ContextMenuCommandAction<U, E> {}
 impl<U, E> Clone for ContextMenuCommandAction<U, E> {
     fn clone(&self) -> Self {

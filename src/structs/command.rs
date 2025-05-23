@@ -4,6 +4,10 @@ use crate::{serenity_prelude as serenity, BoxFuture};
 
 use super::{CowStr, CowVec};
 
+/// The boxed future returned by all command action functions.
+pub(super) type CommandFuture<'a, U, E> =
+    BoxFuture<'a, Result<(), crate::FrameworkError<'a, U, E>>>;
+
 /// Type returned from `#[poise::command]` annotated functions, which contains all of the generated
 /// prefix and application commands
 #[derive(derivative::Derivative)]
@@ -12,18 +16,12 @@ pub struct Command<U, E> {
     // =============
     /// Callback to execute when this command is invoked in a prefix context
     #[derivative(Debug = "ignore")]
-    pub prefix_action: Option<
-        for<'a> fn(
-            crate::PrefixContext<'a, U, E>,
-        ) -> BoxFuture<'a, Result<(), crate::FrameworkError<'a, U, E>>>,
-    >,
+    pub prefix_action:
+        Option<for<'a> fn(crate::PrefixContext<'a, U, E>) -> CommandFuture<'a, U, E>>,
     /// Callback to execute when this command is invoked in a slash context
     #[derivative(Debug = "ignore")]
-    pub slash_action: Option<
-        for<'a> fn(
-            crate::ApplicationContext<'a, U, E>,
-        ) -> BoxFuture<'a, Result<(), crate::FrameworkError<'a, U, E>>>,
-    >,
+    pub slash_action:
+        Option<for<'a> fn(crate::ApplicationContext<'a, U, E>) -> CommandFuture<'a, U, E>>,
     /// Callback to execute when this command is invoked in a context menu context
     ///
     /// The enum variant shows which Discord item this context menu command works on
